@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// Data model
+//   usernames/{username} -> { uid }              one doc per claimed handle (enforces uniqueness)
+//   profiles/{uid}       -> Profile + updatedAt  the portfolio content; public only when published
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    match /usernames/{name} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && name.matches('^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$');
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /profiles/{uid} {
+      // Owner check first so a missing doc never errors for its owner
+      allow get: if (signedIn() && request.auth.uid == uid) || resource.data.published == true;
+      allow list: if false;
+      // The username stored on the profile must be claimed by this user
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.published is bool
+        && existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+  }
+}
