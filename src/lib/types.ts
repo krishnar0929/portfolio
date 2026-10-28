@@ -49,16 +49,25 @@ export type Review = {
 
 export type Theme = "light" | "dark";
 
+/** draft: only the owner sees it · public: anyone with the link · private: link + password */
+export type Visibility = "draft" | "public" | "private";
+
+export const MIN_PASSWORD_LENGTH = 8;
+
 export type Profile = {
   username: string;
-  published: boolean;
+  visibility: Visibility;
   // Identity
   name: string;
   title: string;
   tagline: string;
   specialties: string[];
   available: boolean;
-  location: string;
+  location: string; // optional free-text address shown on the page
+  city: string;
+  region: string; // state / province
+  zip: string;
+  country: string;
   degree: string;
   avatarUrl: string;
   backgroundUrl: string;
@@ -98,13 +107,17 @@ export const ACCENT_PRESETS = [
 export function emptyProfile(username = ""): Profile {
   return {
     username,
-    published: false,
+    visibility: "draft",
     name: "",
     title: "",
     tagline: "",
     specialties: [],
     available: true,
     location: "",
+    city: "",
+    region: "",
+    zip: "",
+    country: "",
     degree: "",
     avatarUrl: "",
     backgroundUrl: "",
@@ -163,9 +176,29 @@ export const emptyReview = (): Review => ({
 const numOrNull = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
 /** Fill any missing fields (older docs, partial data) so the UI never sees undefined. */
-export function normalizeProfile(data: Partial<Profile> | undefined | null): Profile {
+export function normalizeProfile(
+  data:
+    | (Partial<Profile> & {
+        published?: boolean;
+        privateKey?: unknown;
+        ownerUid?: unknown;
+        updatedAt?: unknown;
+        cityKey?: unknown;
+        zipKey?: unknown;
+      })
+    | undefined
+    | null,
+): Profile {
   const base = emptyProfile();
-  const d = data ?? {};
+  // Drop storage-only fields so they never leak into the UI or a public copy
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { published, privateKey, ownerUid, updatedAt, cityKey: _c, zipKey: _z, ...d } = data ?? {};
+  const visibility: Visibility =
+    d.visibility === "public" || d.visibility === "private" || d.visibility === "draft"
+      ? d.visibility
+      : published
+        ? "public"
+        : "draft";
   return {
     ...base,
     ...d,
@@ -182,6 +215,17 @@ export function normalizeProfile(data: Partial<Profile> | undefined | null): Pro
     yearsExperience: numOrNull(d.yearsExperience),
     projectsCount: numOrNull(d.projectsCount),
     clientsCount: numOrNull(d.clientsCount),
-    published: Boolean(d.published),
+    visibility,
   };
 }
+
+/** Address to show: the free-text one if set, else built from city/state/ZIP/country. */
+export function displayLocation(p: Pick<Profile, "location" | "city" | "region" | "zip" | "country">): string {
+  if (p.location.trim()) return p.location.trim();
+  const regionZip = [p.region.trim(), p.zip.trim()].filter(Boolean).join(" ");
+  return [p.city.trim(), regionZip, p.country.trim()].filter(Boolean).join(", ");
+}
+
+/** Normalised values the directory search matches against. */
+export const cityKey = (city: string) => city.trim().toLowerCase().replace(/\s+/g, " ");
+export const zipKey = (zip: string) => zip.trim().toUpperCase().replace(/\s+/g, "");

@@ -6,7 +6,7 @@ export default function NotFound() {
       <div>
         <p className="eyebrow">404</p>
         <h1 className="heading mt-3">This page doesn&apos;t exist (yet)</h1>
-        <p className="mt-3 text-slate-400">The profile may be unpublished, or the name is still up for grabs.</p>
+        <p className="mt-3 text-slate-400">The profile may be a draft, or the name is still up for grabs.</p>
         <div className="mt-8 flex justify-center gap-3">
           <Link href="/login" className="btn-primary">
             Claim it

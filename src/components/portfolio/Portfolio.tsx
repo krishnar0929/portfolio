@@ -21,7 +21,7 @@ import {
   XIcon,
 } from "@/components/Icons";
 import { hexToRgbTriplet } from "@/lib/color";
-import type { Profile } from "@/lib/types";
+import { displayLocation, type Profile } from "@/lib/types";
 import { Navbar, type NavLink } from "./Navbar";
 import { ProjectGrid } from "./ProjectGrid";
 import { Reveal } from "./Reveal";
@@ -344,7 +344,7 @@ function About({ p, displayName }: { p: Profile; displayName: string }) {
     degree ? { Icon: CapIcon, label: "Degree", value: degree } : null,
     p.yearsExperience ? { Icon: ClockIcon, label: "Experience", value: `${p.yearsExperience}+ Years` } : null,
     p.email ? { Icon: MailIcon, label: "Email", value: p.email, href: `mailto:${p.email}` } : null,
-    p.location ? { Icon: PinIcon, label: "Address", value: p.location } : null,
+    displayLocation(p) ? { Icon: PinIcon, label: "Address", value: displayLocation(p) } : null,
     p.socials.phone ? { Icon: PhoneIcon, label: "Phone", value: p.socials.phone } : null,
   ].filter(Boolean) as { Icon: Icon; label: string; value: string; accent?: boolean; href?: string }[];
 

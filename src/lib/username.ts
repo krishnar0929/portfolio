@@ -2,7 +2,7 @@
 export const RESERVED_USERNAMES = new Set([
   "admin", "api", "app", "about", "account", "auth", "blog", "dashboard", "demo", "docs",
   "edit", "help", "home", "login", "logout", "new", "pricing", "privacy", "profile",
-  "settings", "signin", "signup", "static", "support", "terms", "www", "_next", "favicon",
+  "search", "settings", "signin", "signup", "static", "support", "terms", "www", "_next", "favicon",
 ]);
 
 const USERNAME_RE = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;

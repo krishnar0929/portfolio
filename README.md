@@ -11,18 +11,29 @@ A multi-user portfolio platform: anyone signs in, fills in their resume details,
 | `/` | Landing page |
 | `/demo` | Sample portfolio (works without Firebase) |
 | `/login` | Google or email/password sign-in, password reset |
-| `/dashboard` | Claim a username, edit profile with live preview, save (⌘S), publish/unpublish, change link |
-| `/<username>` | Public portfolio, server-rendered with SEO + social card metadata; 404 when unpublished |
+| `/dashboard` | Claim a username, edit with live preview, save (⌘S), set Draft / Public / Private, page password, change link |
+| `/<username>` | Portfolio page; password prompt when Private; 404 when Draft |
+| `/search?q=` | Find Public profiles by city or ZIP code |
 
 Portfolio layout: sticky profile card on the left (photo, "Available for work" badge, scrolling specialties, years/projects/clients stats, contact list, Contact and Meet buttons) and sections on the right — About with info cards, colour-coded Skills, Experience timeline + Education, filterable Portfolio, Reviews, Contact and Meeting. Light/dark toggle, per-user accent colour and optional background image.
 
-## Privacy model
+## Visibility
 
-- No directory or search: there is no page that lists profiles, and Firestore rules block listing.
-- Signed-in users can only read and edit their own profile.
-- A profile is visible only to people who have its link, and only after the owner publishes it.
-- Profile pages send `noindex` and `robots.txt` disallows them, so they stay out of search engines.
-- Password protection per profile is planned; the hook point is marked in `src/app/[username]/page.tsx`.
+Each profile has one of three settings, switched at the top of the dashboard:
+
+| Setting | Who can see it | Searchable |
+|---|---|---|
+| **Draft** | Only the owner | No |
+| **Public** | Anyone with the link | Yes, by city or ZIP at `/search` |
+| **Private** | Anyone with the link **and** the page password | No |
+
+How it's enforced (see `firestore.rules`):
+
+- `profiles/{uid}` holds the editable profile and is readable only by its owner.
+- When Public, a copy is written to `publicProfiles/{username}` with `cityKey`/`zipKey` for search. Only this collection can be queried.
+- When Private, a copy is written to `privateProfiles/{key}`, where `key = PBKDF2(password, uid)`. The password is never stored. Visitors derive the key in their browser, so without the password the data can't be found, and the collection can't be listed.
+- Switching away from Public/Private deletes that copy in the same batch.
+- Profile pages send `noindex`, so search engines don't list them.
 
 ## Local setup
 

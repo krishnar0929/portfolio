@@ -1,33 +1,66 @@
 rules_version = '2';
 
 // Data model
-//   usernames/{username} -> { uid }              one doc per claimed handle (enforces uniqueness)
-//   profiles/{uid}       -> Profile + updatedAt  the portfolio content; public only when published
+//   usernames/{username}      { uid, visibility }       one doc per handle (uniqueness + what the page should show)
+//   profiles/{uid}            full profile + privateKey the owner's editable copy; nobody else can read it
+//   publicProfiles/{username} content copy              readable and searchable by anyone while the profile is public
+//   privateProfiles/{key}     content copy              key is derived from the owner's password, so only
+//                                                       visitors who know the password can find it
+// Only public profiles can be searched. Draft and private profiles can't be listed or found.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() { return request.auth != null; }
+    function validVisibility(v) { return v in ['draft', 'public', 'private']; }
+    function ownsHandleAfter(name) {
+      return existsAfter(/databases/$(database)/documents/usernames/$(name))
+        && getAfter(/databases/$(database)/documents/usernames/$(name)).data.uid == request.auth.uid;
+    }
 
     match /usernames/{name} {
       allow get: if true;
       allow list: if false;
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
+        && validVisibility(request.resource.data.visibility)
         && name.matches('^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$');
-      allow update: if false;
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && validVisibility(request.resource.data.visibility);
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
     match /profiles/{uid} {
-      // Owner check first so a missing doc never errors for its owner
-      allow get: if (signedIn() && request.auth.uid == uid) || resource.data.published == true;
-      allow list: if false;
-      // The username stored on the profile must be claimed by this user
+      allow read, delete: if signedIn() && request.auth.uid == uid;
       allow create, update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.published is bool
-        && existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username))
-        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid;
-      allow delete: if signedIn() && request.auth.uid == uid;
+        && validVisibility(request.resource.data.visibility)
+        && ownsHandleAfter(request.resource.data.username);
+    }
+
+    match /publicProfiles/{name} {
+      // Only public profiles live here, so they can be read and searched (by city / ZIP)
+      allow get: if true;
+      allow list: if request.query.limit <= 50;
+      allow create, update: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.username == name
+        && ownsHandleAfter(name)
+        && getAfter(/databases/$(database)/documents/usernames/$(name)).data.visibility == 'public';
+      // resource == null: deleting a copy that doesn't exist is a no-op
+      allow delete: if signedIn() && (resource == null || resource.data.ownerUid == request.auth.uid);
+    }
+
+    match /privateProfiles/{key} {
+      allow get: if key.matches('^[a-f0-9]{64}$');
+      allow list: if false;
+      allow create: if signedIn()
+        && key.matches('^[a-f0-9]{64}$')
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if signedIn() && (resource == null || resource.data.ownerUid == request.auth.uid);
     }
   }
 }

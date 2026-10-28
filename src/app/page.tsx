@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRightIcon } from "@/components/Icons";
+import { SearchBox } from "@/components/SearchBox";
 import { SITE_URL } from "@/lib/firebase";
 
 const host = SITE_URL.replace(/^https?:\/\//, "");
@@ -18,8 +19,8 @@ const features = [
     body: "Every edit shows up instantly in the preview. Publish when it looks right, unpublish any time.",
   },
   {
-    title: "Private by default",
-    body: "There's no public directory and profiles are hidden from search engines. Only people you share your link with can see your page.",
+    title: "Public or private",
+    body: "Public pages can be found by city or ZIP. Private pages need your link and a password you choose.",
   },
   {
     title: "Make it yours",
@@ -40,6 +41,9 @@ export default function Home() {
           Portfolio
         </Link>
         <nav className="flex items-center gap-2">
+          <Link href="/search" className="btn hidden text-slate-300 hover:text-white sm:inline-flex">
+            Find people
+          </Link>
           <Link href="/demo" className="btn text-slate-300 hover:text-white">
             Demo
           </Link>
@@ -76,6 +80,10 @@ export default function Home() {
           <p className="mt-6 font-mono text-sm text-slate-500">
             {host}/<span className="text-accent">yourname</span>
           </p>
+          <div className="mx-auto mt-14 max-w-2xl text-left">
+            <p className="mb-3 text-center text-sm text-slate-400">Looking for someone? Search public profiles near you.</p>
+            <SearchBox />
+          </div>
         </div>
       </section>
 

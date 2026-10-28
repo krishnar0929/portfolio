@@ -89,11 +89,20 @@ export function ProfileEditor({
             placeholder="One sentence about what you do and who you help."
             hint="Used in link previews when your page is shared."
           />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextInput label="City" value={p.city} onChange={(city) => set({ city })} placeholder="Atlanta" />
+            <TextInput label="State / region" value={p.region} onChange={(region) => set({ region })} placeholder="GA" />
+            <TextInput label="ZIP / postal code" value={p.zip} onChange={(zip) => set({ zip })} placeholder="30303" />
+            <TextInput label="Country" value={p.country} onChange={(country) => set({ country })} placeholder="USA" />
+          </div>
+          <p className="-mt-2 text-xs text-slate-500">
+            When your page is Public, people can find it by searching your city or ZIP code.
+          </p>
           <TextInput
-            label="Address / location"
+            label="Address shown on page (optional)"
             value={p.location}
             onChange={(location) => set({ location })}
-            placeholder="Atlanta, Georgia, USA"
+            placeholder="Leave empty to show City, State ZIP, Country"
           />
           <TextInput
             label="Degree"

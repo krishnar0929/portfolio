@@ -1,24 +1,33 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PasswordGate } from "@/components/portfolio/PasswordGate";
 import { Portfolio } from "@/components/portfolio/Portfolio";
-import { getPublicProfile } from "@/lib/publicProfiles";
+import { getProfileView } from "@/lib/publicProfiles";
 
-// Re-fetch published profiles at most every 30 seconds
+// Re-fetch at most every 30 seconds
 export const revalidate = 30;
 
 type Props = { params: { username: string } };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const profile = await getPublicProfile(params.username);
-  if (!profile) return { title: "Profile not found", robots: { index: false, follow: false } };
+// Profiles are shared by link: keep all of them out of search engines
+const robots = { index: false, follow: false };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const view = await getProfileView(params.username);
+  if (!view) return { title: "Profile not found", robots };
+
+  // Private: reveal nothing beyond the handle
+  if (view.kind === "private") {
+    return { title: `@${view.username} · Private profile`, robots };
+  }
+
+  const profile = view.profile;
   const title = profile.title ? `${profile.name} — ${profile.title}` : profile.name;
   const description = profile.tagline || profile.about.slice(0, 160);
   return {
     title,
     description,
-    // Profiles are private-by-link: keep them out of search engines
-    robots: { index: false, follow: false },
+    robots,
     alternates: { canonical: `/${profile.username}` },
     openGraph: {
       title,
@@ -36,9 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProfilePage({ params }: Props) {
-  const profile = await getPublicProfile(params.username);
-  if (!profile) notFound();
-  // Future: password protection — if profile.passwordProtected and the visitor has no
-  // valid unlock cookie, render a password form here instead of the portfolio.
-  return <Portfolio profile={profile} />;
+  const view = await getProfileView(params.username);
+  if (!view) notFound();
+  if (view.kind === "private") return <PasswordGate uid={view.uid} username={view.username} />;
+  return <Portfolio profile={view.profile} />;
 }
