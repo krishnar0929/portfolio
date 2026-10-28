@@ -173,6 +173,9 @@ export const emptyReview = (): Review => ({
   rating: 5,
 });
 
+// Fields that exist only in Firestore docs, never in the Profile the UI uses
+const STORAGE_ONLY_FIELDS = ["published", "privateKey", "ownerUid", "updatedAt", "cityKey", "zipKey"] as const;
+
 const numOrNull = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
 /** Fill any missing fields (older docs, partial data) so the UI never sees undefined. */
@@ -191,8 +194,10 @@ export function normalizeProfile(
 ): Profile {
   const base = emptyProfile();
   // Drop storage-only fields so they never leak into the UI or a public copy
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { published, privateKey, ownerUid, updatedAt, cityKey: _c, zipKey: _z, ...d } = data ?? {};
+  const raw: Record<string, unknown> = { ...(data ?? {}) };
+  const published = raw.published === true;
+  for (const key of STORAGE_ONLY_FIELDS) delete raw[key];
+  const d = raw as Partial<Profile>;
   const visibility: Visibility =
     d.visibility === "public" || d.visibility === "private" || d.visibility === "draft"
       ? d.visibility
