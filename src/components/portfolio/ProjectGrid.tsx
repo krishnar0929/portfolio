@@ -17,7 +17,7 @@ export function ProjectGrid({ projects }: { projects: Project[] }) {
   return (
     <>
       {categories.length > 2 && (
-        <div className="mb-10 flex flex-wrap gap-2" role="tablist" aria-label="Filter projects">
+        <div className="mb-8 flex flex-wrap gap-2" role="tablist" aria-label="Filter projects">
           {categories.map((c) => (
             <button
               key={c}
@@ -25,10 +25,10 @@ export function ProjectGrid({ projects }: { projects: Project[] }) {
               role="tab"
               aria-selected={filter === c}
               onClick={() => setFilter(c)}
-              className={`rounded-full px-4 py-1.5 text-sm transition ${
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                 filter === c
-                  ? "bg-accent text-ink-950"
-                  : "border border-white/10 text-slate-400 hover:border-accent/40 hover:text-white"
+                  ? "bg-accent text-white shadow-sm"
+                  : "border border-slate-200 bg-white text-slate-600 hover:border-accent/40 hover:text-accent dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
               }`}
             >
               {c}
@@ -37,9 +37,9 @@ export function ProjectGrid({ projects }: { projects: Project[] }) {
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2">
         {shown.map((p, i) => (
-          <Reveal key={`${p.title}-${i}`} delay={(i % 3) * 90}>
+          <Reveal key={`${p.title}-${i}`} delay={(i % 2) * 90}>
             <ProjectCard project={p} />
           </Reveal>
         ))}
@@ -51,8 +51,8 @@ export function ProjectGrid({ projects }: { projects: Project[] }) {
 function ProjectCard({ project: p }: { project: Project }) {
   const primaryLink = p.liveUrl || p.repoUrl;
   return (
-    <article className="card group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-accent/30 hover:shadow-[0_20px_60px_-25px_rgb(var(--accent)/0.5)]">
-      <div className="relative aspect-[16/10] overflow-hidden bg-ink-800">
+    <article className="pcard group flex h-full flex-col overflow-hidden transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-20px_rgb(var(--accent)/0.45)]">
+      <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-ink-800">
         {p.image ? (
           <img
             src={p.image}
@@ -61,23 +61,21 @@ function ProjectCard({ project: p }: { project: Project }) {
             loading="lazy"
           />
         ) : (
-          <div className="relative grid h-full place-items-center overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgb(var(--accent)/0.35),transparent_60%)]" />
-            <div className="bg-grid absolute inset-0 opacity-60" />
-            <span className="relative font-display text-5xl font-semibold text-white/80">
+          <div className="grid h-full place-items-center bg-gradient-to-br from-accent/80 via-accent/40 to-teal-300/60">
+            <span className="font-display text-5xl font-bold text-white/90">
               {p.title.trim()[0]?.toUpperCase() ?? "•"}
             </span>
           </div>
         )}
         {p.category && (
-          <span className="absolute left-3 top-3 rounded-full bg-ink-950/80 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-accent backdrop-blur">
+          <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-accent shadow-sm dark:bg-ink-950/80">
             {p.category}
           </span>
         )}
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="font-display text-lg font-semibold text-white">
+        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
           {primaryLink ? (
             <a href={primaryLink} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
               {p.title}
@@ -86,26 +84,29 @@ function ProjectCard({ project: p }: { project: Project }) {
             p.title
           )}
         </h3>
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-400">{p.description}</p>
+        <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{p.description}</p>
 
         {p.tags.length > 0 && (
           <ul className="mt-4 flex flex-wrap gap-1.5">
             {p.tags.map((t) => (
-              <li key={t} className="font-mono text-[11px] text-slate-500">
-                #{t}
+              <li
+                key={t}
+                className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-white/5 dark:text-slate-400"
+              >
+                {t}
               </li>
             ))}
           </ul>
         )}
 
         {(p.liveUrl || p.repoUrl) && (
-          <div className="mt-5 flex gap-4 border-t border-white/[0.06] pt-4 text-sm">
+          <div className="mt-5 flex gap-4 border-t border-slate-100 pt-4 text-sm dark:border-white/[0.06]">
             {p.liveUrl && (
               <a
                 href={p.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-slate-300 hover:text-accent"
+                className="inline-flex items-center gap-1.5 font-medium text-slate-700 hover:text-accent dark:text-slate-300"
               >
                 Live <ArrowUpRightIcon className="h-4 w-4" />
               </a>
@@ -115,7 +116,7 @@ function ProjectCard({ project: p }: { project: Project }) {
                 href={p.repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-slate-300 hover:text-accent"
+                className="inline-flex items-center gap-1.5 font-medium text-slate-700 hover:text-accent dark:text-slate-300"
               >
                 <GithubIcon className="h-4 w-4" /> Code
               </a>

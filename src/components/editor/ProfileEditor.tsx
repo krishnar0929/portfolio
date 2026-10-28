@@ -7,11 +7,22 @@ import {
   emptyEducation,
   emptyExperience,
   emptyProject,
+  emptyReview,
   type Profile,
 } from "@/lib/types";
-import { ItemCard, ListInput, move, removeAt, TextArea, TextInput, updateAt } from "./fields";
+import {
+  ItemCard,
+  ListInput,
+  move,
+  NumberInput,
+  removeAt,
+  TextArea,
+  TextInput,
+  Toggle,
+  updateAt,
+} from "./fields";
 
-const TABS = ["Basics", "About", "Skills", "Experience", "Projects", "Education", "Design"] as const;
+const TABS = ["Basics", "About", "Contact", "Skills", "Experience", "Projects", "Education", "Reviews", "Design"] as const;
 type Tab = (typeof TABS)[number];
 
 export function ProfileEditor({
@@ -57,18 +68,38 @@ export function ProfileEditor({
             onChange={(title) => set({ title })}
             placeholder="Full-Stack Engineer"
           />
+          <Toggle
+            label="Available for work"
+            hint="Shows a green badge and status dot on your card."
+            checked={p.available}
+            onChange={(available) => set({ available })}
+          />
+          <ListInput
+            label="Specialties"
+            value={p.specialties}
+            onChange={(specialties) => set({ specialties })}
+            placeholder="AI Agents, Full-Stack, Mobile Apps"
+            hint="Scroll under your name on the card. Separate with commas."
+          />
           <TextArea
             label="Tagline"
             rows={2}
             value={p.tagline}
             onChange={(tagline) => set({ tagline })}
             placeholder="One sentence about what you do and who you help."
+            hint="Used in link previews when your page is shared."
           />
           <TextInput
-            label="Location"
+            label="Address / location"
             value={p.location}
             onChange={(location) => set({ location })}
-            placeholder="Atlanta, GA"
+            placeholder="Atlanta, Georgia, USA"
+          />
+          <TextInput
+            label="Degree"
+            value={p.degree}
+            onChange={(degree) => set({ degree })}
+            placeholder="Bachelor's Degree"
           />
           <div>
             <TextInput
@@ -89,6 +120,19 @@ export function ProfileEditor({
             )}
           </div>
           <TextInput
+            label="Background image URL"
+            value={p.backgroundUrl}
+            onChange={(backgroundUrl) => set({ backgroundUrl })}
+            placeholder="https://… (optional, shown faded behind the page)"
+          />
+          <TextInput
+            label="Meeting link"
+            value={p.meetingUrl}
+            onChange={(meetingUrl) => set({ meetingUrl })}
+            placeholder="https://calendly.com/…"
+            hint="Adds a Meet button and a Meeting section (Calendly, Cal.com, Google booking page…)."
+          />
+          <TextInput
             label="Resume link (PDF)"
             value={p.resumeUrl}
             onChange={(resumeUrl) => set({ resumeUrl })}
@@ -107,21 +151,52 @@ export function ProfileEditor({
             onChange={(about) => set({ about })}
             hint="Leave a blank line between paragraphs."
           />
+          <div className="grid grid-cols-3 gap-3">
+            <NumberInput
+              label="Years"
+              max={60}
+              value={p.yearsExperience}
+              onChange={(yearsExperience) => set({ yearsExperience })}
+            />
+            <NumberInput
+              label="Projects"
+              value={p.projectsCount}
+              onChange={(projectsCount) => set({ projectsCount })}
+            />
+            <NumberInput label="Clients" value={p.clientsCount} onChange={(clientsCount) => set({ clientsCount })} />
+          </div>
+          <p className="-mt-2 text-xs text-slate-500">
+            Stats on your card. Leave Projects empty to count the projects you list.
+          </p>
+        </div>
+      )}
+
+      {tab === "Contact" && (
+        <div className="space-y-5">
+          <p className="text-sm text-slate-400">Everything you fill in here is shown on your card and in the Contact section.</p>
           <TextInput
-            label="Years of experience"
-            type="number"
-            value={p.yearsExperience === null ? "" : String(p.yearsExperience)}
-            onChange={(v) => {
-              const n = parseInt(v, 10);
-              set({ yearsExperience: Number.isFinite(n) && n >= 0 ? Math.min(n, 60) : null });
-            }}
-          />
-          <TextInput
-            label="Contact email"
+            label="Email"
             type="email"
             value={p.email}
             onChange={(email) => set({ email })}
-            hint="Shown publicly on your page."
+          />
+          <TextInput
+            label="Phone"
+            value={p.socials.phone}
+            onChange={(phone) => set({ socials: { ...p.socials, phone } })}
+            placeholder="+1 555 123 4567"
+          />
+          <TextInput
+            label="Telegram"
+            value={p.socials.telegram}
+            onChange={(telegram) => set({ socials: { ...p.socials, telegram } })}
+            placeholder="@username"
+          />
+          <TextInput
+            label="Discord"
+            value={p.socials.discord}
+            onChange={(discord) => set({ socials: { ...p.socials, discord } })}
+            placeholder="username"
           />
           <TextInput
             label="GitHub"
@@ -340,6 +415,58 @@ export function ProfileEditor({
         </div>
       )}
 
+      {tab === "Reviews" && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">Quotes from clients, managers or teammates. Use real feedback only.</p>
+          {p.reviews.map((r, i) => (
+            <ItemCard
+              key={i}
+              title={r.name || `Review ${i + 1}`}
+              index={i}
+              count={p.reviews.length}
+              onMove={(a, b) => set({ reviews: move(p.reviews, a, b) })}
+              onRemove={(idx) => set({ reviews: removeAt(p.reviews, idx) })}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextInput
+                  label="Name"
+                  value={r.name}
+                  onChange={(name) => set({ reviews: updateAt(p.reviews, i, { name }) })}
+                />
+                <TextInput
+                  label="Role / company"
+                  value={r.role}
+                  onChange={(role) => set({ reviews: updateAt(p.reviews, i, { role }) })}
+                />
+              </div>
+              <TextArea
+                label="Review"
+                rows={3}
+                value={r.text}
+                onChange={(text) => set({ reviews: updateAt(p.reviews, i, { text }) })}
+              />
+              <div>
+                <p className="label">Rating</p>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      aria-label={`${n} star${n > 1 ? "s" : ""}`}
+                      onClick={() => set({ reviews: updateAt(p.reviews, i, { rating: n }) })}
+                      className={`text-2xl leading-none ${n <= r.rating ? "text-amber-400" : "text-slate-600"}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </ItemCard>
+          ))}
+          <AddButton onClick={() => set({ reviews: [...p.reviews, emptyReview()] })}>Add review</AddButton>
+        </div>
+      )}
+
       {tab === "Design" && (
         <div className="space-y-5">
           <div>
@@ -368,7 +495,24 @@ export function ProfileEditor({
               </label>
             </div>
           </div>
-          <p className="text-sm text-slate-500">More themes and layouts can be added here later.</p>
+          <div>
+            <p className="label">Default theme for visitors</p>
+            <div className="flex gap-2">
+              {(["light", "dark"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => set({ theme: t })}
+                  className={`rounded-full px-4 py-1.5 text-sm capitalize transition ${
+                    p.theme === t ? "bg-accent text-ink-950" : "border border-white/10 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">Visitors can still switch with the moon/sun button.</p>
+          </div>
         </div>
       )}
     </div>

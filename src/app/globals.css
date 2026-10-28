@@ -83,3 +83,27 @@ body {
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 75%);
 }
+
+/* Public portfolio (light by default, `.dark` wrapper switches it) */
+@layer components {
+  .pcard {
+    @apply rounded-2xl border border-slate-200/80 bg-white/90 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.12)] backdrop-blur
+      dark:border-white/[0.07] dark:bg-ink-900/85 dark:shadow-none;
+  }
+  .ptitle {
+    @apply font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white;
+  }
+  .ptitle-bar {
+    @apply mt-2 h-1 w-12 rounded-full bg-accent;
+  }
+  .picon {
+    @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-float {
+    animation: none;
+  }
+}

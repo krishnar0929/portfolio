@@ -14,7 +14,15 @@ A multi-user portfolio platform: anyone signs in, fills in their resume details,
 | `/dashboard` | Claim a username, edit profile with live preview, save (⌘S), publish/unpublish, change link |
 | `/<username>` | Public portfolio, server-rendered with SEO + social card metadata; 404 when unpublished |
 
-Portfolio sections: hero (photo, headline, tagline, resume button, socials), about with stats, skills, experience timeline, filterable project grid, education, contact. Each user picks an accent colour.
+Portfolio layout: sticky profile card on the left (photo, "Available for work" badge, scrolling specialties, years/projects/clients stats, contact list, Contact and Meet buttons) and sections on the right — About with info cards, colour-coded Skills, Experience timeline + Education, filterable Portfolio, Reviews, Contact and Meeting. Light/dark toggle, per-user accent colour and optional background image.
+
+## Privacy model
+
+- No directory or search: there is no page that lists profiles, and Firestore rules block listing.
+- Signed-in users can only read and edit their own profile.
+- A profile is visible only to people who have its link, and only after the owner publishes it.
+- Profile pages send `noindex` and `robots.txt` disallows them, so they stay out of search engines.
+- Password protection per profile is planned; the hook point is marked in `src/app/[username]/page.tsx`.
 
 ## Local setup
 

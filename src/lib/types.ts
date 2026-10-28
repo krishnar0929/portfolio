@@ -3,6 +3,9 @@ export type SocialLinks = {
   linkedin: string;
   twitter: string;
   website: string;
+  telegram: string;
+  discord: string;
+  phone: string;
 };
 
 export type SkillGroup = {
@@ -37,35 +40,59 @@ export type Education = {
   end: string;
 };
 
+export type Review = {
+  name: string;
+  role: string;
+  text: string;
+  rating: number; // 1–5
+};
+
+export type Theme = "light" | "dark";
+
 export type Profile = {
   username: string;
   published: boolean;
+  // Identity
   name: string;
   title: string;
-  location: string;
   tagline: string;
+  specialties: string[];
+  available: boolean;
+  location: string;
+  degree: string;
   avatarUrl: string;
+  backgroundUrl: string;
   resumeUrl: string;
+  meetingUrl: string;
+  // About + stats
   about: string;
   yearsExperience: number | null;
+  projectsCount: number | null; // optional override; defaults to projects listed
+  clientsCount: number | null;
+  // Contact
   email: string;
-  accent: string; // hex, e.g. #0ea5e9
   socials: SocialLinks;
+  // Sections
   skills: SkillGroup[];
   experience: Experience[];
   projects: Project[];
   education: Education[];
+  reviews: Review[];
+  // Design
+  accent: string; // hex, e.g. #0ea5e9
+  theme: Theme; // default theme for visitors
 };
 
 export const DEFAULT_ACCENT = "#0ea5e9";
 
 export const ACCENT_PRESETS = [
   "#0ea5e9", // sky
+  "#6366f1", // indigo
   "#8b5cf6", // violet
   "#10b981", // emerald
+  "#14b8a6", // teal
   "#f59e0b", // amber
   "#f43f5e", // rose
-  "#14b8a6", // teal
 ];
 
 export function emptyProfile(username = ""): Profile {
@@ -74,19 +101,28 @@ export function emptyProfile(username = ""): Profile {
     published: false,
     name: "",
     title: "",
-    location: "",
     tagline: "",
+    specialties: [],
+    available: true,
+    location: "",
+    degree: "",
     avatarUrl: "",
+    backgroundUrl: "",
     resumeUrl: "",
+    meetingUrl: "",
     about: "",
     yearsExperience: null,
+    projectsCount: null,
+    clientsCount: null,
     email: "",
-    accent: DEFAULT_ACCENT,
-    socials: { github: "", linkedin: "", twitter: "", website: "" },
+    socials: { github: "", linkedin: "", twitter: "", website: "", telegram: "", discord: "", phone: "" },
     skills: [],
     experience: [],
     projects: [],
     education: [],
+    reviews: [],
+    accent: DEFAULT_ACCENT,
+    theme: "light",
   };
 }
 
@@ -117,6 +153,15 @@ export const emptyEducation = (): Education => ({
   end: "",
 });
 
+export const emptyReview = (): Review => ({
+  name: "",
+  role: "",
+  text: "",
+  rating: 5,
+});
+
+const numOrNull = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
 /** Fill any missing fields (older docs, partial data) so the UI never sees undefined. */
 export function normalizeProfile(data: Partial<Profile> | undefined | null): Profile {
   const base = emptyProfile();
@@ -125,12 +170,18 @@ export function normalizeProfile(data: Partial<Profile> | undefined | null): Pro
     ...base,
     ...d,
     socials: { ...base.socials, ...(d.socials ?? {}) },
+    specialties: d.specialties ?? [],
     skills: (d.skills ?? []).map((s) => ({ name: s.name ?? "", items: s.items ?? [] })),
     experience: (d.experience ?? []).map((e) => ({ ...emptyExperience(), ...e })),
     projects: (d.projects ?? []).map((p) => ({ ...emptyProject(), ...p })),
     education: (d.education ?? []).map((e) => ({ ...emptyEducation(), ...e })),
+    reviews: (d.reviews ?? []).map((r) => ({ ...emptyReview(), ...r })),
     accent: d.accent || DEFAULT_ACCENT,
-    yearsExperience: typeof d.yearsExperience === "number" ? d.yearsExperience : null,
+    theme: d.theme === "dark" ? "dark" : "light",
+    available: d.available === undefined ? base.available : Boolean(d.available),
+    yearsExperience: numOrNull(d.yearsExperience),
+    projectsCount: numOrNull(d.projectsCount),
+    clientsCount: numOrNull(d.clientsCount),
     published: Boolean(d.published),
   };
 }

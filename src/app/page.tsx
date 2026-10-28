@@ -18,12 +18,12 @@ const features = [
     body: "Every edit shows up instantly in the preview. Publish when it looks right, unpublish any time.",
   },
   {
-    title: "Looks great everywhere",
-    body: "Dark, modern design with smooth scroll animations. Fast on phones, crisp on big screens.",
+    title: "Private by default",
+    body: "There's no public directory and profiles are hidden from search engines. Only people you share your link with can see your page.",
   },
   {
     title: "Make it yours",
-    body: "Pick an accent colour, add your photo, resume PDF link and social profiles.",
+    body: "Light and dark modes, an accent colour, your photo, background image, resume and meeting links.",
   },
   {
     title: "Shareable previews",
