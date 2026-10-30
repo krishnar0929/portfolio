@@ -19,9 +19,10 @@ const projectOk = (x: Project) => filled(x.title) && filled(x.description);
 
 export const SECTION_STATUS = {
   personal: (p: Profile) =>
-    fromFields([p.firstName, p.lastName, p.email, p.city, p.zip, p.country], [p.middleName, p.phone, p.region]),
-  summary: (p: Profile) => fromFields([p.title, p.about], [p.tagline, p.avatarUrl, p.resumeUrl, ...p.specialties]),
+    fromFields([p.firstName, p.lastName, p.email, p.city, p.zip, p.country], [p.middleName, p.phone, p.region, p.avatarUrl]),
+  summary: (p: Profile) => fromFields([p.title, p.about], [p.tagline, p.resumeUrl, ...p.specialties]),
   education: (p: Profile) => fromList(p.education, (e) => filled(e.school) && filled(e.degree)),
+  certifications: (p: Profile) => fromList(p.certifications, (c) => filled(c.name) && filled(c.issuer)),
   experience: (p: Profile) => fromList(p.experience, (e) => filled(e.role) && filled(e.company) && filled(e.start)),
   skills: (p: Profile) => fromList(p.skills, (g) => filled(g.name) && g.items.length > 0),
   projects: (p: Profile) => fromList(p.projects, projectOk),
@@ -38,7 +39,7 @@ export const SECTION_STATUS = {
     return p.otherLinks.every((l) => filled(l.label) && filled(l.url)) ? "complete" : "partial";
   },
   additional: (p: Profile) =>
-    fromFields([], [...p.additional.languages, ...p.additional.certifications, ...p.additional.interests, p.additional.notes]),
+    fromFields([], [...p.additional.languages, ...p.additional.interests, p.additional.notes]),
   reviews: (p: Profile) => fromList(p.reviews, (r) => filled(r.name) && filled(r.text)),
   design: (p: Profile) => fromFields([], [p.meetingUrl, p.backgroundUrl]),
 } satisfies Record<string, (p: Profile) => SectionStatus>;

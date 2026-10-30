@@ -21,9 +21,19 @@ Portfolio layout: sticky profile card on the left (photo, "Available for work" b
 
 The dashboard groups the profile into collapsible sections, all closed by default, each marked **Complete** (green tick), **In progress** or **Empty**, with a profile-strength bar:
 
-Personal Details (as per passport) · Professional Summary · Education · Work Experience · Skills · Projects · Personal Projects · Immigration Details · References · Links · Additional Info · Testimonials · Design & Extras
+Personal Details (with photo upload) · Professional Summary · Education · Certifications · Work Experience · Skills · Projects · Personal Projects · Immigration Details · References · Links · Additional Info · Testimonials · Design & Extras
 
 Email, phone, immigration details and references each have a "show on my page" switch. Immigration and references are hidden by default.
+
+## Export
+
+Every profile page, and the dashboard's top bar, has an **Export** menu. It only exports what that visitor can see:
+
+- **PDF résumé:** a plain, ATS-friendly layout printed through the browser's Save as PDF (`ResumeDocument.tsx`).
+- **Excel workbook (.xlsx):** one sheet per section, with bold frozen headers. It's built without any extra packages (`lib/export/xlsx.ts`).
+- **Contact card (.vcf):** vCard 3.0 for Contacts, Outlook or Google Contacts.
+
+Uploaded photos are cropped to a 400×400 JPEG in the browser and stored with the profile, so they don't need Firebase Storage.
 
 ## Visibility
 

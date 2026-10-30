@@ -35,6 +35,16 @@ export const sampleProfile: Profile = normalizeProfile({
       grade: "GPA 3.7",
     },
   ],
+  certifications: [
+    {
+      name: "AWS Certified Developer – Associate",
+      issuer: "Amazon Web Services",
+      issued: "2023-05",
+      expires: "2026-05",
+      credentialId: "",
+      url: "",
+    },
+  ],
   experience: [
     {
       role: "Senior Software Engineer",
@@ -137,7 +147,6 @@ export const sampleProfile: Profile = normalizeProfile({
   otherLinks: [{ label: "Blog", url: "https://example.com/blog" }],
   additional: {
     languages: ["English", "Spanish"],
-    certifications: ["AWS Certified Developer – Associate"],
     interests: ["Open source", "Hiking"],
     notes: "",
   },

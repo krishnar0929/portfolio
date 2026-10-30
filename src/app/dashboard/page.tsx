@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ArrowUpRightIcon, ChevronDownIcon, CloseIcon } from "@/components/Icons";
 import { ClaimUsername } from "@/components/editor/ClaimUsername";
+import { ExportMenu } from "@/components/export/ExportMenu";
 import { ProfileEditor } from "@/components/editor/ProfileEditor";
 import { Portfolio } from "@/components/portfolio/Portfolio";
 import { SetupNotice } from "@/components/SetupNotice";
@@ -257,6 +258,7 @@ export default function DashboardPage() {
                     : ""}
           </span>
           <VisibilityBadge visibility={profile.visibility} />
+          <ExportMenu profile={publishedView(profile)} variant="dark" />
           <button type="button" onClick={() => persist(profile)} disabled={!dirty || saveState === "saving"} className="btn-primary">
             Save
           </button>

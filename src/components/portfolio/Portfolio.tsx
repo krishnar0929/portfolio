@@ -21,7 +21,7 @@ import {
   XIcon,
 } from "@/components/Icons";
 import { hexToRgbTriplet } from "@/lib/color";
-import { displayLocation, fullName, type Profile } from "@/lib/types";
+import { displayLocation, formatMonth, fullName, type Profile } from "@/lib/types";
 import { Navbar, type NavLink } from "./Navbar";
 import { ProjectGrid } from "./ProjectGrid";
 import { Reveal } from "./Reveal";
@@ -133,7 +133,7 @@ export function Portfolio({ profile: p }: { profile: Profile }) {
           {!bg && (
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_at_top,rgb(var(--accent)/0.12),transparent_65%)]" />
           )}
-          <Navbar initials={initialsOf(displayName) || "•"} links={links} />
+          <Navbar initials={initialsOf(displayName) || "•"} links={links} profile={p} />
 
           <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-12 lg:py-12">
             <aside className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:rounded-2xl lg:[scrollbar-width:thin]">
@@ -144,6 +144,7 @@ export function Portfolio({ profile: p }: { profile: Profile }) {
               <About p={p} displayName={displayName} />
               {hasSkills && <Skills p={p} />}
               {(p.experience.length > 0 || p.education.length > 0) && <ExperienceSection p={p} />}
+              {p.certifications.length > 0 && <Certifications p={p} />}
               {(p.projects.length > 0 || p.personalProjects.length > 0) && (
                 <section id="portfolio" className="scroll-mt-24">
                   <SectionTitle>Projects</SectionTitle>
@@ -697,7 +698,6 @@ function References({ p }: { p: Profile }) {
 
 const hasAdditional = (p: Profile) =>
   p.additional.languages.length > 0 ||
-  p.additional.certifications.length > 0 ||
   p.additional.interests.length > 0 ||
   p.additional.notes.trim().length > 0;
 
@@ -729,22 +729,56 @@ function AdditionalInfo({ p }: { p: Profile }) {
               {chips(a.interests)}
             </div>
           )}
-          {a.certifications.length > 0 && (
-            <div className="sm:col-span-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Certifications</h3>
-              <ul className="mt-2 space-y-1.5">
-                {a.certifications.map((c) => (
-                  <li key={c} className="flex gap-3 text-slate-700 dark:text-slate-300">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
           {a.notes.trim() && <p className="text-slate-600 dark:text-slate-400 sm:col-span-2">{a.notes}</p>}
         </div>
       </Reveal>
+    </section>
+  );
+}
+
+function Certifications({ p }: { p: Profile }) {
+  return (
+    <section id="certifications" className="scroll-mt-24">
+      <SectionTitle>Certifications</SectionTitle>
+      <div className="grid gap-5 sm:grid-cols-2">
+        {p.certifications.map((c, i) => {
+          const expired = /^\d{4}-\d{2}$/.test(c.expires) && new Date(`${c.expires}-28`) < new Date();
+          return (
+            <Reveal key={`${c.name}-${i}`} delay={(i % 2) * 70}>
+              <div className="pcard flex h-full items-start gap-4 p-5">
+                <span className="picon">
+                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
+                    <circle cx="12" cy="9" r="5" />
+                    <path d="m9 13.5-1.5 7L12 18l4.5 2.5L15 13.5" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 dark:text-white">{c.name}</p>
+                  {c.issuer && <p className="text-sm text-slate-600 dark:text-slate-400">{c.issuer}</p>}
+                  {(c.issued || c.expires) && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      {c.issued && `Issued ${formatMonth(c.issued)}`}
+                      {c.issued && c.expires && " · "}
+                      {c.expires && (expired ? `Expired ${formatMonth(c.expires)}` : `Valid until ${formatMonth(c.expires)}`)}
+                    </p>
+                  )}
+                  {c.credentialId && <p className="mt-1 font-mono text-xs text-slate-500">ID {c.credentialId}</p>}
+                  {c.url && (
+                    <a
+                      href={c.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
+                    >
+                      Verify <ArrowUpRightIcon className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          );
+        })}
+      </div>
     </section>
   );
 }

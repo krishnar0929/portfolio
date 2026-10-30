@@ -5,6 +5,7 @@ import { PlusIcon } from "@/components/Icons";
 import { completion, SECTION_STATUS, type SectionId } from "@/lib/sections";
 import {
   ACCENT_PRESETS,
+  emptyCertification,
   emptyEducation,
   emptyExperience,
   emptyProject,
@@ -27,12 +28,14 @@ import {
   Toggle,
   updateAt,
 } from "./fields";
+import { PhotoUpload } from "./PhotoUpload";
 import { Section } from "./Section";
 
 const ORDER: SectionId[] = [
   "personal",
   "summary",
   "education",
+  "certifications",
   "experience",
   "skills",
   "projects",
@@ -104,10 +107,15 @@ export function ProfileEditor({
       <Section
         {...sectionProps("personal")}
         title="Personal Details"
-        tag="As per passport"
-        description="Legal name, contact and current location"
+        description="Photo, name, contact and current location"
       >
-        <p className="text-xs text-slate-500">Enter your name exactly as it appears on your passport. * required</p>
+        <PhotoUpload
+          value={p.avatarUrl}
+          initials={[p.firstName, p.lastName].map((n) => n.trim()[0] ?? "").join("").toUpperCase()}
+          googlePhoto={photoURL}
+          onChange={(avatarUrl) => set({ avatarUrl })}
+        />
+        <p className="text-xs text-slate-500">* required</p>
         <div className="grid gap-4 sm:grid-cols-3">
           <TextInput label="First name *" value={p.firstName} onChange={(firstName) => set({ firstName })} />
           <TextInput label="Middle name" value={p.middleName} onChange={(middleName) => set({ middleName })} />
@@ -139,7 +147,7 @@ export function ProfileEditor({
       </Section>
 
       {/* 2. Professional summary */}
-      <Section {...sectionProps("summary")} title="Professional Summary" description="Headline, about you, photo and resume">
+      <Section {...sectionProps("summary")} title="Professional Summary" description="Headline, about you and resume">
         <TextInput label="Headline *" value={p.title} onChange={(title) => set({ title })} placeholder="Senior Full-Stack Engineer" />
         <TextArea
           label="About you *"
@@ -171,20 +179,6 @@ export function ProfileEditor({
           <NumberInput label="Years exp." max={60} value={p.yearsExperience} onChange={(yearsExperience) => set({ yearsExperience })} />
           <NumberInput label="Projects" value={p.projectsCount} onChange={(projectsCount) => set({ projectsCount })} />
           <NumberInput label="Clients" value={p.clientsCount} onChange={(clientsCount) => set({ clientsCount })} />
-        </div>
-        <div>
-          <TextInput
-            label="Photo URL"
-            value={p.avatarUrl}
-            onChange={(avatarUrl) => set({ avatarUrl })}
-            placeholder="https://…"
-            hint="Tip: https://github.com/<username>.png works well."
-          />
-          {photoURL && photoURL !== p.avatarUrl && (
-            <button type="button" className="mt-2 text-xs text-accent hover:underline" onClick={() => set({ avatarUrl: photoURL })}>
-              Use my Google profile photo
-            </button>
-          )}
         </div>
         <TextInput
           label="Resume link (PDF)"
@@ -218,6 +212,64 @@ export function ProfileEditor({
           </ItemCard>
         ))}
         <AddButton onClick={() => set({ education: [...p.education, emptyEducation()] })}>Add education</AddButton>
+      </Section>
+
+      {/* Certifications */}
+      <Section
+        {...sectionProps("certifications")}
+        title="Certifications"
+        description={countLabel(p.certifications.length, "certification", "certifications")}
+      >
+        {p.certifications.map((c, i) => (
+          <ItemCard
+            key={i}
+            title={c.name || `Certification ${i + 1}`}
+            index={i}
+            count={p.certifications.length}
+            onMove={(a, b) => set({ certifications: move(p.certifications, a, b) })}
+            onRemove={(idx) => set({ certifications: removeAt(p.certifications, idx) })}
+          >
+            <TextInput
+              label="Certification name *"
+              value={c.name}
+              placeholder="AWS Certified Solutions Architect – Associate"
+              onChange={(name) => set({ certifications: updateAt(p.certifications, i, { name }) })}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextInput
+                label="Issuing organization *"
+                value={c.issuer}
+                placeholder="Amazon Web Services"
+                onChange={(issuer) => set({ certifications: updateAt(p.certifications, i, { issuer }) })}
+              />
+              <TextInput
+                label="Credential ID"
+                value={c.credentialId}
+                onChange={(credentialId) => set({ certifications: updateAt(p.certifications, i, { credentialId }) })}
+              />
+              <TextInput
+                label="Issued"
+                type="month"
+                value={c.issued}
+                onChange={(issued) => set({ certifications: updateAt(p.certifications, i, { issued }) })}
+              />
+              <TextInput
+                label="Expires"
+                type="month"
+                value={c.expires}
+                hint="Leave empty if it doesn't expire."
+                onChange={(expires) => set({ certifications: updateAt(p.certifications, i, { expires }) })}
+              />
+            </div>
+            <TextInput
+              label="Verification link"
+              value={c.url}
+              placeholder="https://www.credly.com/badges/…"
+              onChange={(url) => set({ certifications: updateAt(p.certifications, i, { url }) })}
+            />
+          </ItemCard>
+        ))}
+        <AddButton onClick={() => set({ certifications: [...p.certifications, emptyCertification()] })}>Add certification</AddButton>
       </Section>
 
       {/* 4. Experience */}
@@ -394,15 +446,8 @@ export function ProfileEditor({
       </Section>
 
       {/* 11. Additional info */}
-      <Section {...sectionProps("additional")} title="Additional Info" tag="Optional" description="Languages, certifications, interests">
+      <Section {...sectionProps("additional")} title="Additional Info" tag="Optional" description="Languages, interests, anything else">
         <ListInput label="Languages" value={p.additional.languages} placeholder="English, Hindi, Telugu" onChange={(languages) => set({ additional: { ...p.additional, languages } })} />
-        <ListInput
-          multiline
-          label="Certifications"
-          value={p.additional.certifications}
-          placeholder={"AWS Certified Developer – Associate\nPMP"}
-          onChange={(certifications) => set({ additional: { ...p.additional, certifications } })}
-        />
         <ListInput label="Interests" value={p.additional.interests} placeholder="Open source, cricket" onChange={(interests) => set({ additional: { ...p.additional, interests } })} />
         <TextArea label="Anything else" rows={3} value={p.additional.notes} onChange={(notes) => set({ additional: { ...p.additional, notes } })} />
       </Section>

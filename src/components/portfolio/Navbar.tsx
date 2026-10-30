@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ExportMenu } from "@/components/export/ExportMenu";
 import { CloseIcon, MenuIcon } from "@/components/Icons";
+import type { Profile } from "@/lib/types";
 import { ThemeToggle } from "./ThemeShell";
 
 export type NavLink = { id: string; label: string };
 
-export function Navbar({ initials, links }: { initials: string; links: NavLink[] }) {
+export function Navbar({ initials, links, profile }: { initials: string; links: NavLink[]; profile: Profile }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string>(links[0]?.id ?? "");
   const idsKey = links.map((l) => l.id).join(",");
@@ -54,6 +56,7 @@ export function Navbar({ initials, links }: { initials: string; links: NavLink[]
               </li>
             ))}
           </ul>
+          <ExportMenu profile={profile} />
           <ThemeToggle />
           <button
             type="button"

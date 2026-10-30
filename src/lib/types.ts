@@ -44,6 +44,15 @@ export type Education = {
   grade: string;
 };
 
+export type Certification = {
+  name: string;
+  issuer: string;
+  issued: string; // yyyy-mm
+  expires: string; // yyyy-mm, empty = no expiry
+  credentialId: string;
+  url: string;
+};
+
 export type Sponsorship = "" | "yes" | "no";
 
 export type Immigration = {
@@ -64,7 +73,6 @@ export type Reference = {
 
 export type AdditionalInfo = {
   languages: string[];
-  certifications: string[];
   interests: string[];
   notes: string;
 };
@@ -133,6 +141,7 @@ export type Profile = {
   resumeUrl: string;
   // Sections
   education: Education[];
+  certifications: Certification[];
   experience: Experience[];
   skills: SkillGroup[];
   projects: Project[];
@@ -165,7 +174,7 @@ export const emptyImmigration = (): Immigration => ({
   notes: "",
 });
 
-export const emptyAdditional = (): AdditionalInfo => ({ languages: [], certifications: [], interests: [], notes: "" });
+export const emptyAdditional = (): AdditionalInfo => ({ languages: [], interests: [], notes: "" });
 
 export function emptyProfile(username = ""): Profile {
   return {
@@ -191,6 +200,7 @@ export function emptyProfile(username = ""): Profile {
     clientsCount: null,
     resumeUrl: "",
     education: [],
+    certifications: [],
     experience: [],
     skills: [],
     projects: [],
@@ -238,6 +248,15 @@ export const emptyEducation = (): Education => ({
   start: "",
   end: "",
   grade: "",
+});
+
+export const emptyCertification = (): Certification => ({
+  name: "",
+  issuer: "",
+  issued: "",
+  expires: "",
+  credentialId: "",
+  url: "",
 });
 
 export const emptyReference = (): Reference => ({ name: "", relationship: "", company: "", email: "", phone: "" });
@@ -322,6 +341,18 @@ export function normalizeProfile(data: unknown): Profile {
       end: str(e.end),
       grade: str(e.grade),
     })),
+    // Older docs kept certifications as plain strings under additional
+    certifications: [
+      ...arr(d.certifications).map((c) => ({
+        name: str(c.name),
+        issuer: str(c.issuer),
+        issued: str(c.issued),
+        expires: str(c.expires),
+        credentialId: str(c.credentialId),
+        url: str(c.url),
+      })),
+      ...strArr(add.certifications).map((name) => ({ ...emptyCertification(), name })),
+    ],
     experience: arr(d.experience).map((e) => ({
       role: str(e.role),
       company: str(e.company),
@@ -359,7 +390,6 @@ export function normalizeProfile(data: unknown): Profile {
     otherLinks: arr(d.otherLinks).map((l) => ({ label: str(l.label), url: str(l.url) })),
     additional: {
       languages: strArr(add.languages),
-      certifications: strArr(add.certifications),
       interests: strArr(add.interests),
       notes: str(add.notes),
     },
@@ -413,4 +443,11 @@ export function publishedView(p: Profile): Profile {
     references: p.privacy.showReferences ? p.references : [],
     authorizedEmails: [],
   };
+}
+
+/** "2023-05" -> "May 2023" (leaves other text as-is). */
+export function formatMonth(v: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(v.trim());
+  if (!m) return v.trim();
+  return new Date(Number(m[1]), Number(m[2]) - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }

@@ -36,10 +36,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: "profile",
       url: `/${profile.username}`,
-      images: profile.avatarUrl ? [{ url: profile.avatarUrl }] : undefined,
+      images: profile.avatarUrl && !profile.avatarUrl.startsWith("data:") ? [{ url: profile.avatarUrl }] : undefined,
     },
     twitter: {
-      card: profile.avatarUrl ? "summary_large_image" : "summary",
+      card: "summary",
       title,
       description,
     },

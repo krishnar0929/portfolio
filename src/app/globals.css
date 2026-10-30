@@ -107,3 +107,22 @@ body {
     animation: none;
   }
 }
+
+/* "Export → PDF résumé": print only the résumé portal (see ExportMenu.tsx) */
+#resume-print {
+  display: none;
+}
+@media print {
+  @page {
+    margin: 0.55in;
+  }
+  body.print-resume {
+    background: #fff !important;
+  }
+  body.print-resume > *:not(#resume-print) {
+    display: none !important;
+  }
+  body.print-resume #resume-print {
+    display: block;
+  }
+}
