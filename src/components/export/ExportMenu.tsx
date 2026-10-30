@@ -1,41 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { DownloadIcon } from "@/components/Icons";
 import { downloadBlob, fileBaseName, profileVcard, profileXlsx } from "@/lib/export/profileExport";
 import type { Profile } from "@/lib/types";
 import { ResumeDocument } from "./ResumeDocument";
 
-const OPTIONS = [
+export const EXPORT_OPTIONS = [
   { id: "pdf", label: "PDF résumé", hint: "Print-ready, opens Save as PDF" },
   { id: "xlsx", label: "Excel workbook (.xlsx)", hint: "One sheet per section" },
   { id: "vcf", label: "Contact card (.vcf)", hint: "Add to Contacts or Outlook" },
 ] as const;
 
-/**
- * "Export" dropdown. Exports only what the given profile contains, so pass
- * the visitor-visible copy (publishedView), never the owner's full data.
- */
-export function ExportMenu({ profile, variant = "light" }: { profile: Profile; variant?: "light" | "dark" }) {
-  const [open, setOpen] = useState(false);
-  const [printing, setPrinting] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+export type ExportId = (typeof EXPORT_OPTIONS)[number]["id"];
 
-  // Close on outside click / Escape
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+/**
+ * Export actions for a profile. Exports only what the given profile contains,
+ * so pass the visitor-visible copy (publishedView), never the owner's full data.
+ * Render `portal` somewhere in the tree — it holds the résumé while printing.
+ */
+export function useProfileExport(profile: Profile) {
+  const [printing, setPrinting] = useState(false);
 
   // PDF: render the résumé into <body>, print only it, then clean up
   useEffect(() => {
@@ -56,13 +42,48 @@ export function ExportMenu({ profile, variant = "light" }: { profile: Profile; v
     };
   }, [printing, profile]);
 
-  const run = (id: (typeof OPTIONS)[number]["id"]) => {
-    setOpen(false);
-    const base = fileBaseName(profile);
-    if (id === "pdf") setPrinting(true);
-    if (id === "xlsx") downloadBlob(profileXlsx(profile), `${base}.xlsx`);
-    if (id === "vcf") downloadBlob(profileVcard(profile, `${window.location.origin}/${profile.username}`), `${base}.vcf`);
-  };
+  const run = useCallback(
+    (id: ExportId) => {
+      const base = fileBaseName(profile);
+      if (id === "pdf") setPrinting(true);
+      if (id === "xlsx") downloadBlob(profileXlsx(profile), `${base}.xlsx`);
+      if (id === "vcf") downloadBlob(profileVcard(profile, `${window.location.origin}/${profile.username}`), `${base}.vcf`);
+    },
+    [profile],
+  );
+
+  const portal = printing
+    ? createPortal(
+        <div id="resume-print">
+          <ResumeDocument p={profile} />
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return { run, portal };
+}
+
+/** "Export" dropdown button. */
+export function ExportMenu({ profile, variant = "light" }: { profile: Profile; variant?: "light" | "dark" }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { run, portal } = useProfileExport(profile);
+
+  // Close on outside click / Escape
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   const button =
     variant === "dark"
@@ -87,12 +108,15 @@ export function ExportMenu({ profile, variant = "light" }: { profile: Profile; v
           role="menu"
           className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 text-left shadow-xl dark:border-white/10 dark:bg-ink-900"
         >
-          {OPTIONS.map((o) => (
+          {EXPORT_OPTIONS.map((o) => (
             <button
               key={o.id}
               type="button"
               role="menuitem"
-              onClick={() => run(o.id)}
+              onClick={() => {
+                setOpen(false);
+                run(o.id);
+              }}
               className="block w-full rounded-lg px-3 py-2 text-left transition hover:bg-slate-100 dark:hover:bg-white/5"
             >
               <span className="block text-sm font-medium text-slate-900 dark:text-white">{o.label}</span>
@@ -101,14 +125,7 @@ export function ExportMenu({ profile, variant = "light" }: { profile: Profile; v
           ))}
         </div>
       )}
-
-      {printing &&
-        createPortal(
-          <div id="resume-print">
-            <ResumeDocument p={profile} />
-          </div>,
-          document.body,
-        )}
+      {portal}
     </div>
   );
 }

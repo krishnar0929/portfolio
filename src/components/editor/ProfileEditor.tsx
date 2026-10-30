@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PlusIcon } from "@/components/Icons";
 import { completion, SECTION_STATUS, type SectionId } from "@/lib/sections";
 import {
-  ACCENT_PRESETS,
   emptyCertification,
   emptyEducation,
   emptyExperience,
@@ -45,7 +44,6 @@ const ORDER: SectionId[] = [
   "links",
   "additional",
   "reviews",
-  "design",
 ];
 
 export function ProfileEditor({
@@ -426,6 +424,13 @@ export function ProfileEditor({
           <TextInput label="Telegram" value={p.socials.telegram} placeholder="@username" onChange={(telegram) => set({ socials: { ...p.socials, telegram } })} />
           <TextInput label="Discord" value={p.socials.discord} placeholder="username" onChange={(discord) => set({ socials: { ...p.socials, discord } })} />
         </div>
+        <TextInput
+          label="Meeting / booking link"
+          value={p.meetingUrl}
+          onChange={(meetingUrl) => set({ meetingUrl })}
+          placeholder="https://calendly.com/…"
+          hint="Adds a Meet button and a booking section (Calendly, Cal.com, Google booking page…)."
+        />
         <p className="label !mb-0 pt-1">Other links</p>
         {p.otherLinks.map((l, i) => (
           <ItemCard
@@ -490,65 +495,6 @@ export function ProfileEditor({
         <AddButton onClick={() => set({ reviews: [...p.reviews, emptyReview()] })}>Add testimonial</AddButton>
       </Section>
 
-      {/* 13. Design */}
-      <Section {...sectionProps("design")} title="Design & Extras" tag="Optional" description="Colour, theme, background, meeting link">
-        <div>
-          <p className="label">Accent colour</p>
-          <div className="flex flex-wrap items-center gap-3">
-            {ACCENT_PRESETS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-label={`Accent ${c}`}
-                onClick={() => set({ accent: c })}
-                className={`h-9 w-9 rounded-full ring-offset-2 ring-offset-ink-900 transition ${
-                  p.accent.toLowerCase() === c ? "ring-2 ring-white" : "hover:scale-110"
-                }`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-            <label className="flex items-center gap-2 text-sm text-slate-400">
-              <input
-                type="color"
-                value={p.accent}
-                onChange={(e) => set({ accent: e.target.value })}
-                className="h-9 w-12 cursor-pointer rounded border border-white/10 bg-transparent"
-              />
-              Custom
-            </label>
-          </div>
-        </div>
-        <div>
-          <p className="label">Default theme for visitors</p>
-          <div className="flex gap-2">
-            {(["light", "dark"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => set({ theme: t })}
-                className={`rounded-full px-4 py-1.5 text-sm capitalize transition ${
-                  p.theme === t ? "bg-accent text-ink-950" : "border border-white/10 text-slate-400 hover:text-white"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-        <TextInput
-          label="Background image URL"
-          value={p.backgroundUrl}
-          onChange={(backgroundUrl) => set({ backgroundUrl })}
-          placeholder="https://… (shown faded behind the page)"
-        />
-        <TextInput
-          label="Meeting link"
-          value={p.meetingUrl}
-          onChange={(meetingUrl) => set({ meetingUrl })}
-          placeholder="https://calendly.com/…"
-          hint="Adds a Meet button (Calendly, Cal.com, Google booking page…)."
-        />
-      </Section>
     </div>
   );
 }

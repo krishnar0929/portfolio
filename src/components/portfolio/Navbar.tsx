@@ -8,7 +8,17 @@ import { ThemeToggle } from "./ThemeShell";
 
 export type NavLink = { id: string; label: string };
 
-export function Navbar({ initials, links, profile }: { initials: string; links: NavLink[]; profile: Profile }) {
+export function Navbar({
+  initials,
+  links,
+  profile,
+  showExport = true,
+}: {
+  initials: string;
+  links: NavLink[];
+  profile: Profile;
+  showExport?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string>(links[0]?.id ?? "");
   const idsKey = links.map((l) => l.id).join(",");
@@ -56,7 +66,7 @@ export function Navbar({ initials, links, profile }: { initials: string; links: 
               </li>
             ))}
           </ul>
-          <ExportMenu profile={profile} />
+          {showExport && <ExportMenu profile={profile} />}
           <ThemeToggle />
           <button
             type="button"

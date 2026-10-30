@@ -93,6 +93,25 @@ export type Privacy = {
 
 export type Theme = "light" | "dark";
 
+export type BackgroundStyle = "aurora" | "grid" | "dots" | "plain";
+
+export const BACKGROUND_STYLES: { value: BackgroundStyle; label: string }[] = [
+  { value: "aurora", label: "Aurora" },
+  { value: "grid", label: "Grid" },
+  { value: "dots", label: "Dots" },
+  { value: "plain", label: "Plain" },
+];
+
+/** One-click looks: accent colour + background + default theme. */
+export const THEME_PRESETS: { name: string; accent: string; background: BackgroundStyle; theme: Theme }[] = [
+  { name: "Ocean", accent: "#0ea5e9", background: "aurora", theme: "light" },
+  { name: "Indigo", accent: "#6366f1", background: "grid", theme: "light" },
+  { name: "Emerald", accent: "#10b981", background: "dots", theme: "light" },
+  { name: "Sunset", accent: "#f97316", background: "aurora", theme: "light" },
+  { name: "Midnight", accent: "#8b5cf6", background: "grid", theme: "dark" },
+  { name: "Terminal", accent: "#22c55e", background: "dots", theme: "dark" },
+];
+
 /** draft: only the owner · public: anyone, searchable · private: invited emails or password */
 export type Visibility = "draft" | "public" | "private";
 
@@ -157,6 +176,7 @@ export type Profile = {
   backgroundUrl: string;
   accent: string; // hex, e.g. #0ea5e9
   theme: Theme;
+  backgroundStyle: BackgroundStyle;
   // What visitors see / who can see it
   privacy: Privacy;
   authorizedEmails: string[]; // owner-only; never copied to what visitors read
@@ -215,6 +235,7 @@ export function emptyProfile(username = ""): Profile {
     backgroundUrl: "",
     accent: DEFAULT_ACCENT,
     theme: "light",
+    backgroundStyle: "aurora",
     privacy: { showEmail: true, showPhone: true, showImmigration: false, showReferences: false },
     authorizedEmails: [],
   };
@@ -406,6 +427,9 @@ export function normalizeProfile(data: unknown): Profile {
     backgroundUrl: str(d.backgroundUrl),
     accent: str(d.accent) || DEFAULT_ACCENT,
     theme: d.theme === "dark" ? "dark" : "light",
+    backgroundStyle: BACKGROUND_STYLES.some((b) => b.value === d.backgroundStyle)
+      ? (d.backgroundStyle as BackgroundStyle)
+      : "aurora",
     privacy: {
       showEmail: bool(priv.showEmail, true),
       showPhone: bool(priv.showPhone, true),

@@ -11,7 +11,7 @@ A multi-user portfolio platform: anyone signs in, fills in their resume details,
 | `/` | Landing page |
 | `/demo` | Sample portfolio (works without Firebase) |
 | `/login` | Google or email/password sign-in, password reset |
-| `/dashboard` | Claim a username, edit with live preview, save (⌘S), Draft / Public / Private, invite emails, page password, change link |
+| `/dashboard` | **View** (your page as visitors see it, the default) · **Edit** (collapsible sections, Preview before saving) · **Settings** (visibility, authorized viewers, page password, link, appearance and theme presets, export) |
 | `/<username>` | Portfolio page; when Private, sign-in for invited emails and/or password prompt; 404 when Draft |
 | `/search?q=` | Find Public profiles by name, skills or location |
 

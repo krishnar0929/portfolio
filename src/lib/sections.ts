@@ -41,7 +41,6 @@ export const SECTION_STATUS = {
   additional: (p: Profile) =>
     fromFields([], [...p.additional.languages, ...p.additional.interests, p.additional.notes]),
   reviews: (p: Profile) => fromList(p.reviews, (r) => filled(r.name) && filled(r.text)),
-  design: (p: Profile) => fromFields([], [p.meetingUrl, p.backgroundUrl]),
 } satisfies Record<string, (p: Profile) => SectionStatus>;
 
 export type SectionId = keyof typeof SECTION_STATUS;

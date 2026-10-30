@@ -100,7 +100,8 @@ function contactRows(p: Profile): ContactRow[] {
  * The public one-page portfolio. Rendered on the server for /[username] and
  * on the client for the live preview in the dashboard.
  */
-export function Portfolio({ profile: p }: { profile: Profile }) {
+/** `showExport={false}` when shown inside the dashboard (it has its own Export). */
+export function Portfolio({ profile: p, showExport = true }: { profile: Profile; showExport?: boolean }) {
   const displayName = fullName(p) || "Your Name";
   const hasSkills = p.skills.some((g) => g.items.length > 0);
 
@@ -126,14 +127,12 @@ export function Portfolio({ profile: p }: { profile: Profile }) {
     >
       <div id="top" style={bg} className={bg ? "bg-cover bg-fixed bg-center" : ""}>
         <div
-          className={`min-h-screen text-slate-700 dark:text-slate-300 ${
+          className={`relative min-h-screen overflow-hidden text-slate-700 dark:text-slate-300 ${
             bg ? "bg-slate-50/85 dark:bg-ink-950/90" : "bg-slate-50 dark:bg-ink-950"
           }`}
         >
-          {!bg && (
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_at_top,rgb(var(--accent)/0.12),transparent_65%)]" />
-          )}
-          <Navbar initials={initialsOf(displayName) || "•"} links={links} profile={p} />
+          {!bg && <PageBackground style={p.backgroundStyle} />}
+          <Navbar initials={initialsOf(displayName) || "•"} links={links} profile={p} showExport={showExport} />
 
           <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-12 lg:py-12">
             <aside className="min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:rounded-2xl lg:[scrollbar-width:thin]">
@@ -201,17 +200,24 @@ function ProfileCard({ p, displayName }: { p: Profile; displayName: string }) {
 
   return (
     <div className="pcard overflow-hidden">
-      {/* Cover */}
-      <div className="relative h-32 overflow-hidden bg-gradient-to-br from-accent via-accent/80 to-teal-300">
-        <span className="absolute -left-6 top-6 h-20 w-20 rounded-full bg-white/20" />
-        <span className="absolute left-10 -top-6 h-14 w-14 rounded-full bg-white/15" />
-        <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/15" />
+      {/* Cover: accent gradient + fine tech grid + glow */}
+      <div className="relative h-36 overflow-hidden bg-ink-950">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgb(var(--accent))_0%,rgb(var(--accent)/0.75)_45%,#0f172a_100%)]" />
+        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgb(255_255_255/0.18)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.18)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+        <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-cyan-300/40 blur-3xl" />
+        <div className="absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+        <svg className="absolute bottom-3 right-4 h-10 w-24 text-white/30" viewBox="0 0 96 40" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <path d="M0 30h22l8-14h20l6 10h18l8-18h14" />
+          <circle cx="30" cy="16" r="2.5" fill="currentColor" />
+          <circle cx="56" cy="26" r="2.5" fill="currentColor" />
+          <circle cx="82" cy="8" r="2.5" fill="currentColor" />
+        </svg>
       </div>
 
       <div className="-mt-16 flex flex-col items-center px-6 pb-6 text-center">
         {/* Avatar */}
-        <div className="relative">
-          <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-lg ring-2 ring-accent/40 dark:border-ink-900 dark:bg-ink-800">
+        <div className="relative rounded-full bg-[conic-gradient(from_180deg,rgb(var(--accent)),#22d3ee,rgb(var(--accent)/0.3),rgb(var(--accent)))] p-[3px] shadow-[0_12px_30px_-10px_rgb(var(--accent)/0.6)]">
+          <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-white bg-slate-100 dark:border-ink-900 dark:bg-ink-800">
             {p.avatarUrl ? (
               <img src={p.avatarUrl} alt={displayName} className="h-full w-full object-cover" />
             ) : (
@@ -780,5 +786,33 @@ function Certifications({ p }: { p: Profile }) {
         })}
       </div>
     </section>
+  );
+}
+
+/** Decorative page background (behind content). */
+function PageBackground({ style }: { style: Profile["backgroundStyle"] }) {
+  if (style === "plain") return null;
+  return (
+    <div className="pointer-events-none absolute inset-0" aria-hidden>
+      {style === "aurora" && (
+        <>
+          <div className="absolute -left-40 -top-40 h-[520px] w-[620px] rounded-full bg-accent/20 blur-[120px]" />
+          <div className="absolute -right-32 top-20 h-[420px] w-[520px] rounded-full bg-cyan-300/25 blur-[120px] dark:bg-cyan-500/10" />
+          <div className="absolute left-1/3 top-[60%] h-[420px] w-[520px] rounded-full bg-violet-300/20 blur-[140px] dark:bg-violet-500/10" />
+        </>
+      )}
+      {style === "grid" && (
+        <>
+          <div className="absolute inset-0 [background-image:linear-gradient(rgb(15_23_42/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(15_23_42/0.06)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black,transparent)] dark:[background-image:linear-gradient(rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.05)_1px,transparent_1px)]" />
+          <div className="absolute left-1/2 top-0 h-[420px] w-[800px] -translate-x-1/2 rounded-full bg-accent/15 blur-[120px]" />
+        </>
+      )}
+      {style === "dots" && (
+        <>
+          <div className="absolute inset-0 [background-image:radial-gradient(rgb(15_23_42/0.12)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)] dark:[background-image:radial-gradient(rgb(255_255_255/0.1)_1px,transparent_1px)]" />
+          <div className="absolute -right-40 -top-32 h-[460px] w-[560px] rounded-full bg-accent/15 blur-[120px]" />
+        </>
+      )}
+    </div>
   );
 }
