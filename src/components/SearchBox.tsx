@@ -3,7 +3,7 @@ export function SearchBox({ defaultValue = "", autoFocus = false }: { defaultVal
   return (
     <form action="/search" method="get" role="search" className="flex w-full gap-2">
       <label htmlFor="q" className="sr-only">
-        City or ZIP code
+        Search profiles
       </label>
       <div className="relative flex-1">
         <svg
@@ -25,7 +25,7 @@ export function SearchBox({ defaultValue = "", autoFocus = false }: { defaultVal
           autoFocus={autoFocus}
           minLength={2}
           required
-          placeholder="Search by city or ZIP code — e.g. Atlanta or 30303"
+          placeholder="Name, skill, city or ZIP — e.g. Alex, React, Atlanta"
           className="w-full rounded-full border border-white/10 bg-ink-900/80 py-3.5 pl-12 pr-4 text-white placeholder:text-slate-500 focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
       </div>

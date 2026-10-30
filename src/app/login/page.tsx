@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   GoogleAuthProvider,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -49,9 +50,16 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
+  // Where to go after signing in (e.g. a private profile the visitor was invited to)
+  const [next, setNext] = useState("/dashboard");
   useEffect(() => {
-    if (!loading && user) router.replace("/dashboard");
-  }, [user, loading, router]);
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/") && !n.startsWith("//")) setNext(n);
+  }, []);
+
+  useEffect(() => {
+    if (!loading && user) router.replace(next);
+  }, [user, loading, router, next]);
 
   if (!isFirebaseConfigured) return <SetupNotice />;
 
@@ -77,7 +85,7 @@ export default function LoginPage() {
     run(() =>
       mode === "signin"
         ? signInWithEmailAndPassword(auth(), email, password)
-        : createUserWithEmailAndPassword(auth(), email, password),
+        : createUserWithEmailAndPassword(auth(), email, password).then((cred) => sendEmailVerification(cred.user)),
     );
   };
 

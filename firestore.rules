@@ -1,20 +1,29 @@
 rules_version = '2';
 
 // Data model
-//   usernames/{username}      { uid, visibility }       one doc per handle (uniqueness + what the page should show)
-//   profiles/{uid}            full profile + privateKey the owner's editable copy; nobody else can read it
-//   publicProfiles/{username} content copy              readable and searchable by anyone while the profile is public
-//   privateProfiles/{key}     content copy              key is derived from the owner's password, so only
-//                                                       visitors who know the password can find it
+//   usernames/{username}                 { uid, visibility, hasPassword }  handle → owner; what the page should show
+//   profiles/{uid}                       full profile + privateKey         the owner's editable copy; nobody else can read it
+//   publicProfiles/{username}            visitor copy + searchTokens       anyone can read and search, only while Public
+//   sharedProfiles/{uid}                 visitor copy                      owner + invited emails, only while Private
+//   sharedProfiles/{uid}/viewers/{email} {}                                one doc per invited email, managed by the owner
+//   privateProfiles/{key}                visitor copy                      key is derived from the page password, so only
+//                                                                          people who know the password can find it
 // Only public profiles can be searched. Draft and private profiles can't be listed or found.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
     function validVisibility(v) { return v in ['draft', 'public', 'private']; }
     function ownsHandleAfter(name) {
       return existsAfter(/databases/$(database)/documents/usernames/$(name))
         && getAfter(/databases/$(database)/documents/usernames/$(name)).data.uid == request.auth.uid;
+    }
+    // Signed-in visitor whose verified email the owner invited
+    function invitedTo(uid) {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/sharedProfiles/$(uid)/viewers/$(request.auth.token.email.lower()));
     }
 
     match /usernames/{name} {
@@ -32,14 +41,14 @@ service cloud.firestore {
     }
 
     match /profiles/{uid} {
-      allow read, delete: if signedIn() && request.auth.uid == uid;
-      allow create, update: if signedIn() && request.auth.uid == uid
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
         && validVisibility(request.resource.data.visibility)
         && ownsHandleAfter(request.resource.data.username);
     }
 
     match /publicProfiles/{name} {
-      // Only public profiles live here, so they can be read and searched (by city / ZIP)
+      // Only public profiles live here, so they can be read and searched
       allow get: if true;
       allow list: if request.query.limit <= 50;
       allow create, update: if signedIn()
@@ -49,6 +58,17 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/usernames/$(name)).data.visibility == 'public';
       // resource == null: deleting a copy that doesn't exist is a no-op
       allow delete: if signedIn() && (resource == null || resource.data.ownerUid == request.auth.uid);
+    }
+
+    match /sharedProfiles/{uid} {
+      allow get: if isOwner(uid) || invitedTo(uid);
+      allow list: if false;
+      allow create, update: if isOwner(uid) && request.resource.data.ownerUid == uid;
+      allow delete: if isOwner(uid);
+
+      match /viewers/{email} {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     match /privateProfiles/{key} {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PinIcon } from "@/components/Icons";
 import { SearchBox } from "@/components/SearchBox";
 import { hexToRgbTriplet } from "@/lib/color";
-import { looksLikeZip, MAX_RESULTS, searchProfiles } from "@/lib/directory";
+import { MAX_RESULTS, searchProfiles } from "@/lib/directory";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,6 @@ const initials = (name: string) =>
 export default async function SearchPage({ searchParams }: Props) {
   const q = (searchParams.q ?? "").trim().slice(0, 60);
   const results = q.length >= 2 ? await searchProfiles(q) : [];
-  const kind = looksLikeZip(q) ? "ZIP code" : "city";
 
   return (
     <div className="relative min-h-screen overflow-x-clip">
@@ -46,8 +45,8 @@ export default async function SearchPage({ searchParams }: Props) {
         <div className="bg-grid pointer-events-none absolute inset-0" />
         <div className="relative mx-auto max-w-3xl px-4 pb-10 pt-12 text-center sm:px-6">
           <p className="eyebrow">Directory</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-white">Find people near you</h1>
-          <p className="mt-3 text-slate-400">Search public profiles by city or ZIP code. Private profiles never appear here.</p>
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight text-white">Find people</h1>
+          <p className="mt-3 text-slate-400">Search public profiles by name, skill, headline, city or ZIP code. Private profiles never appear here.</p>
           <div className="mt-8">
             <SearchBox defaultValue={q} autoFocus={!q} />
           </div>
@@ -58,8 +57,8 @@ export default async function SearchPage({ searchParams }: Props) {
         {q.length >= 2 && (
           <p className="mb-6 text-sm text-slate-400">
             {results.length === 0
-              ? `No public profiles found for ${kind} “${q}”.`
-              : `${results.length}${results.length === MAX_RESULTS ? "+" : ""} profile${results.length === 1 ? "" : "s"} for ${kind} “${q}”`}
+              ? `No public profiles match “${q}”.`
+              : `${results.length}${results.length === MAX_RESULTS ? "+" : ""} profile${results.length === 1 ? "" : "s"} for “${q}”`}
           </p>
         )}
 

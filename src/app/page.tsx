@@ -20,7 +20,7 @@ const features = [
   },
   {
     title: "Public or private",
-    body: "Public pages can be found by city or ZIP. Private pages need your link and a password you choose.",
+    body: "Public pages can be found by name, skills or location. Private pages are only for people you invite by email, or who have your password.",
   },
   {
     title: "Make it yours",
@@ -81,7 +81,7 @@ export default function Home() {
             {host}/<span className="text-accent">yourname</span>
           </p>
           <div className="mx-auto mt-14 max-w-2xl text-left">
-            <p className="mb-3 text-center text-sm text-slate-400">Looking for someone? Search public profiles near you.</p>
+            <p className="mb-3 text-center text-sm text-slate-400">Looking for someone? Search public profiles.</p>
             <SearchBox />
           </div>
         </div>

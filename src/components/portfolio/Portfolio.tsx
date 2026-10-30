@@ -21,7 +21,7 @@ import {
   XIcon,
 } from "@/components/Icons";
 import { hexToRgbTriplet } from "@/lib/color";
-import { displayLocation, type Profile } from "@/lib/types";
+import { displayLocation, fullName, type Profile } from "@/lib/types";
 import { Navbar, type NavLink } from "./Navbar";
 import { ProjectGrid } from "./ProjectGrid";
 import { Reveal } from "./Reveal";
@@ -87,7 +87,10 @@ function contactRows(p: Profile): ContactRow[] {
     s.linkedin ? { label: "LinkedIn", value: handleFromUrl(s.linkedin), href: s.linkedin, Icon: LinkedinIcon } : null,
     s.twitter ? { label: "X / Twitter", value: handleFromUrl(s.twitter), href: s.twitter, Icon: XIcon } : null,
     s.website ? { label: "Website", value: handleFromUrl(s.website), href: s.website, Icon: GlobeIcon } : null,
-    s.phone ? { label: "Phone", value: s.phone, href: `tel:${s.phone.replace(/[^\d+]/g, "")}`, Icon: PhoneIcon } : null,
+    ...p.otherLinks
+      .filter((l) => l.url.trim())
+      .map((l) => ({ label: l.label || "Link", value: handleFromUrl(l.url), href: l.url, Icon: GlobeIcon })),
+    p.phone ? { label: "Phone", value: p.phone, href: `tel:${p.phone.replace(/[^\d+]/g, "")}`, Icon: PhoneIcon } : null,
     p.email ? { label: "Email", value: p.email, href: `mailto:${p.email}`, Icon: MailIcon } : null,
   ];
   return rows.filter(Boolean) as ContactRow[];
@@ -98,15 +101,15 @@ function contactRows(p: Profile): ContactRow[] {
  * on the client for the live preview in the dashboard.
  */
 export function Portfolio({ profile: p }: { profile: Profile }) {
-  const displayName = p.name || "Your Name";
+  const displayName = fullName(p) || "Your Name";
   const hasSkills = p.skills.some((g) => g.items.length > 0);
 
   const links: NavLink[] = [
     { id: "about", label: "About" },
     ...(hasSkills ? [{ id: "skills", label: "Skills" }] : []),
     ...(p.experience.length || p.education.length ? [{ id: "experience", label: "Experience" }] : []),
-    ...(p.projects.length ? [{ id: "portfolio", label: "Portfolio" }] : []),
-    ...(p.reviews.length ? [{ id: "reviews", label: "Reviews" }] : []),
+    ...(p.projects.length || p.personalProjects.length ? [{ id: "portfolio", label: "Projects" }] : []),
+    ...(p.reviews.length ? [{ id: "reviews", label: "Testimonials" }] : []),
     { id: "contact", label: "Contact" },
     ...(p.meetingUrl ? [{ id: "meeting", label: "Meeting" }] : []),
   ];
@@ -141,12 +144,21 @@ export function Portfolio({ profile: p }: { profile: Profile }) {
               <About p={p} displayName={displayName} />
               {hasSkills && <Skills p={p} />}
               {(p.experience.length > 0 || p.education.length > 0) && <ExperienceSection p={p} />}
-              {p.projects.length > 0 && (
+              {(p.projects.length > 0 || p.personalProjects.length > 0) && (
                 <section id="portfolio" className="scroll-mt-24">
-                  <SectionTitle>Portfolio</SectionTitle>
-                  <ProjectGrid projects={p.projects} />
+                  <SectionTitle>Projects</SectionTitle>
+                  {p.projects.length > 0 && <ProjectGrid projects={p.projects} />}
+                  {p.personalProjects.length > 0 && (
+                    <div className={p.projects.length ? "mt-14" : ""}>
+                      <h3 className="mb-6 font-display text-xl font-semibold text-slate-900 dark:text-white">Personal Projects</h3>
+                      <ProjectGrid projects={p.personalProjects} />
+                    </div>
+                  )}
                 </section>
               )}
+              {(p.immigration.workAuthorization || p.immigration.authorizedCountry) && <WorkAuthorization p={p} />}
+              {p.references.length > 0 && <References p={p} />}
+              {hasAdditional(p) && <AdditionalInfo p={p} />}
               {p.reviews.length > 0 && <Reviews p={p} />}
               <Contact p={p} />
               {p.meetingUrl && <Meeting p={p} displayName={displayName} />}
@@ -338,14 +350,15 @@ function Specialties({ items }: { items: string[] }) {
 
 function About({ p, displayName }: { p: Profile; displayName: string }) {
   const paragraphs = (p.about || "Tell visitors a little about yourself.").split(/\n{2,}/);
-  const degree = p.degree || p.education[0]?.degree || "";
+  const firstEdu = p.education[0];
+  const degree = firstEdu ? [firstEdu.degree, firstEdu.field].filter(Boolean).join(" in ") : "";
   const facts = [
     { Icon: UserIcon, label: "Name", value: displayName, accent: true },
     degree ? { Icon: CapIcon, label: "Degree", value: degree } : null,
     p.yearsExperience ? { Icon: ClockIcon, label: "Experience", value: `${p.yearsExperience}+ Years` } : null,
     p.email ? { Icon: MailIcon, label: "Email", value: p.email, href: `mailto:${p.email}` } : null,
     displayLocation(p) ? { Icon: PinIcon, label: "Address", value: displayLocation(p) } : null,
-    p.socials.phone ? { Icon: PhoneIcon, label: "Phone", value: p.socials.phone } : null,
+    p.phone ? { Icon: PhoneIcon, label: "Phone", value: p.phone, href: `tel:${p.phone.replace(/[^\d+]/g, "")}` } : null,
   ].filter(Boolean) as { Icon: Icon; label: string; value: string; accent?: boolean; href?: string }[];
 
   return (
@@ -485,12 +498,16 @@ function ExperienceSection({ p }: { p: Profile }) {
                     <CapIcon className="h-[18px] w-[18px]" />
                   </span>
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">{e.degree}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">{e.school}</p>
-                    {(e.start || e.end) && (
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {[e.degree, e.field].filter(Boolean).join(" in ")}
+                    </p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {e.school}
+                      {e.location ? <span className="text-slate-500"> · {e.location}</span> : null}
+                    </p>
+                    {(e.start || e.end || e.grade) && (
                       <p className="mt-1 text-xs text-slate-500">
-                        {e.start}
-                        {e.end ? ` — ${e.end}` : ""}
+                        {[e.start && `${e.start}${e.end ? ` — ${e.end}` : ""}`, e.grade].filter(Boolean).join(" · ")}
                       </p>
                     )}
                   </div>
@@ -507,7 +524,7 @@ function ExperienceSection({ p }: { p: Profile }) {
 function Reviews({ p }: { p: Profile }) {
   return (
     <section id="reviews" className="scroll-mt-24">
-      <SectionTitle>Reviews</SectionTitle>
+      <SectionTitle>Testimonials</SectionTitle>
       <div className="grid gap-5 md:grid-cols-2">
         {p.reviews.map((r, i) => (
           <Reveal key={`${r.name}-${i}`} delay={(i % 2) * 80}>
@@ -604,6 +621,128 @@ function Meeting({ p, displayName }: { p: Profile; displayName: string }) {
           >
             Schedule <ArrowUpRightIcon className="h-4 w-4" />
           </a>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+function WorkAuthorization({ p }: { p: Profile }) {
+  const im = p.immigration;
+  const validUntil = im.validUntil
+    ? new Date(`${im.validUntil}-01T00:00:00`).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    : "";
+  const facts = [
+    im.workAuthorization ? { label: "Status", value: im.workAuthorization } : null,
+    im.authorizedCountry ? { label: "Authorized to work in", value: im.authorizedCountry } : null,
+    im.sponsorship ? { label: "Visa sponsorship", value: im.sponsorship === "yes" ? "Required" : "Not required" } : null,
+    validUntil ? { label: "Valid until", value: validUntil } : null,
+  ].filter(Boolean) as { label: string; value: string }[];
+  return (
+    <section id="authorization" className="scroll-mt-24">
+      <SectionTitle>Work Authorization</SectionTitle>
+      <Reveal>
+        <div className="pcard p-6">
+          <dl className="grid gap-5 sm:grid-cols-2">
+            {facts.map((f) => (
+              <div key={f.label}>
+                <dt className="text-xs text-slate-500">{f.label}</dt>
+                <dd className="mt-0.5 font-medium text-slate-900 dark:text-white">{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {im.notes && <p className="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-600 dark:border-white/[0.06] dark:text-slate-400">{im.notes}</p>}
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+function References({ p }: { p: Profile }) {
+  return (
+    <section id="references" className="scroll-mt-24">
+      <SectionTitle>References</SectionTitle>
+      <div className="grid gap-5 sm:grid-cols-2">
+        {p.references.map((r, i) => (
+          <Reveal key={`${r.name}-${i}`} delay={(i % 2) * 70}>
+            <div className="pcard flex h-full gap-4 p-5">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent/10 text-sm font-bold text-accent">
+                {initialsOf(r.name) || "?"}
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-900 dark:text-white">{r.name}</p>
+                {(r.relationship || r.company) && (
+                  <p className="text-sm text-slate-500">{[r.relationship, r.company].filter(Boolean).join(" · ")}</p>
+                )}
+                <div className="mt-2 space-y-0.5 text-sm">
+                  {r.email && (
+                    <a href={`mailto:${r.email}`} className="block truncate text-accent hover:underline">
+                      {r.email}
+                    </a>
+                  )}
+                  {r.phone && (
+                    <a href={`tel:${r.phone.replace(/[^\d+]/g, "")}`} className="block text-slate-600 hover:text-accent dark:text-slate-300">
+                      {r.phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const hasAdditional = (p: Profile) =>
+  p.additional.languages.length > 0 ||
+  p.additional.certifications.length > 0 ||
+  p.additional.interests.length > 0 ||
+  p.additional.notes.trim().length > 0;
+
+function AdditionalInfo({ p }: { p: Profile }) {
+  const a = p.additional;
+  const chips = (items: string[]) => (
+    <ul className="mt-2 flex flex-wrap gap-2">
+      {items.map((x) => (
+        <li key={x} className="rounded-lg bg-slate-100 px-2.5 py-1 text-sm text-slate-700 dark:bg-white/5 dark:text-slate-300">
+          {x}
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <section id="additional" className="scroll-mt-24">
+      <SectionTitle>Additional Info</SectionTitle>
+      <Reveal>
+        <div className="pcard grid gap-6 p-6 sm:grid-cols-2">
+          {a.languages.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Languages</h3>
+              {chips(a.languages)}
+            </div>
+          )}
+          {a.interests.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Interests</h3>
+              {chips(a.interests)}
+            </div>
+          )}
+          {a.certifications.length > 0 && (
+            <div className="sm:col-span-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Certifications</h3>
+              <ul className="mt-2 space-y-1.5">
+                {a.certifications.map((c) => (
+                  <li key={c} className="flex gap-3 text-slate-700 dark:text-slate-300">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {a.notes.trim() && <p className="text-slate-600 dark:text-slate-400 sm:col-span-2">{a.notes}</p>}
         </div>
       </Reveal>
     </section>

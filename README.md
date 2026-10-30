@@ -11,29 +11,37 @@ A multi-user portfolio platform: anyone signs in, fills in their resume details,
 | `/` | Landing page |
 | `/demo` | Sample portfolio (works without Firebase) |
 | `/login` | Google or email/password sign-in, password reset |
-| `/dashboard` | Claim a username, edit with live preview, save (⌘S), set Draft / Public / Private, page password, change link |
-| `/<username>` | Portfolio page; password prompt when Private; 404 when Draft |
-| `/search?q=` | Find Public profiles by city or ZIP code |
+| `/dashboard` | Claim a username, edit with live preview, save (⌘S), Draft / Public / Private, invite emails, page password, change link |
+| `/<username>` | Portfolio page; when Private, sign-in for invited emails and/or password prompt; 404 when Draft |
+| `/search?q=` | Find Public profiles by name, skills or location |
 
 Portfolio layout: sticky profile card on the left (photo, "Available for work" badge, scrolling specialties, years/projects/clients stats, contact list, Contact and Meet buttons) and sections on the right — About with info cards, colour-coded Skills, Experience timeline + Education, filterable Portfolio, Reviews, Contact and Meeting. Light/dark toggle, per-user accent colour and optional background image.
 
-## Visibility
+## Editor
 
-Each profile has one of three settings, switched at the top of the dashboard:
+The dashboard groups the profile into collapsible sections, all closed by default, each marked **Complete** (green tick), **In progress** or **Empty**, with a profile-strength bar:
+
+Personal Details (as per passport) · Professional Summary · Education · Work Experience · Skills · Projects · Personal Projects · Immigration Details · References · Links · Additional Info · Testimonials · Design & Extras
+
+Email, phone, immigration details and references each have a "show on my page" switch. Immigration and references are hidden by default.
+
+## Visibility
 
 | Setting | Who can see it | Searchable |
 |---|---|---|
 | **Draft** | Only the owner | No |
-| **Public** | Anyone with the link | Yes, by city or ZIP at `/search` |
-| **Private** | Anyone with the link **and** the page password | No |
+| **Public** | Anyone with the link | Yes, by name, headline, skills, city, state, ZIP or country at `/search` |
+| **Private** | People the owner invites by email (they sign in with that email), or anyone with the page password if one is set | No |
 
 How it's enforced (see `firestore.rules`):
 
-- `profiles/{uid}` holds the editable profile and is readable only by its owner.
-- When Public, a copy is written to `publicProfiles/{username}` with `cityKey`/`zipKey` for search. Only this collection can be queried.
-- When Private, a copy is written to `privateProfiles/{key}`, where `key = PBKDF2(password, uid)`. The password is never stored. Visitors derive the key in their browser, so without the password the data can't be found, and the collection can't be listed.
-- Switching away from Public/Private deletes that copy in the same batch.
-- Profile pages send `noindex`, so search engines don't list them.
+- `profiles/{uid}` holds the editable profile, including the invite list, and only its owner can read it.
+- Visitors only ever read a copy built by `publishedView()`, which leaves out anything switched off and the invite list.
+- **Public:** the copy goes to `publicProfiles/{username}` with `searchTokens`. This is the only collection that can be queried.
+- **Private, by email:** the copy goes to `sharedProfiles/{uid}`. Each invited email is a doc in `sharedProfiles/{uid}/viewers/{email}`. A visitor can read the copy only when signed in with a verified email that has a viewer doc. Email/password accounts get a verification email at sign-up.
+- **Private, by password:** the copy goes to `privateProfiles/{key}`, where `key = PBKDF2(password, uid)`. The password is never stored.
+- Changing visibility, invites or password updates all copies in one batch.
+- Profile pages send `noindex`.
 
 ## Local setup
 

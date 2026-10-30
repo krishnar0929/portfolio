@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { PasswordGate } from "@/components/portfolio/PasswordGate";
+import { PrivateGate } from "@/components/portfolio/PrivateGate";
 import { Portfolio } from "@/components/portfolio/Portfolio";
 import { getProfileView } from "@/lib/publicProfiles";
+import { fullName } from "@/lib/types";
 
 // Re-fetch at most every 30 seconds
 export const revalidate = 30;
@@ -22,7 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const profile = view.profile;
-  const title = profile.title ? `${profile.name} — ${profile.title}` : profile.name;
+  const name = fullName(profile) || profile.username;
+  const title = profile.title ? `${name} — ${profile.title}` : name;
   const description = profile.tagline || profile.about.slice(0, 160);
   return {
     title,
@@ -47,6 +49,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProfilePage({ params }: Props) {
   const view = await getProfileView(params.username);
   if (!view) notFound();
-  if (view.kind === "private") return <PasswordGate uid={view.uid} username={view.username} />;
+  if (view.kind === "private") return <PrivateGate uid={view.uid} username={view.username} hasPassword={view.hasPassword} />;
   return <Portfolio profile={view.profile} />;
 }

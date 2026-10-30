@@ -1,8 +1,9 @@
 // Public directory search (server-side). Only publicProfiles is queried, which
 // holds public profiles only — drafts and private profiles can never appear.
-import { collection, getDocs, getFirestore, limit, orderBy, query, where } from "firebase/firestore/lite";
+import { collection, getDocs, getFirestore, limit, query, where } from "firebase/firestore/lite";
 import { firebaseApp, isFirebaseConfigured } from "./firebase";
-import { cityKey, displayLocation, normalizeProfile, zipKey, type Profile } from "./types";
+import { tokenize } from "./search";
+import { displayLocation, fullName, normalizeProfile, type Profile } from "./types";
 
 export type DirectoryResult = {
   username: string;
@@ -17,15 +18,10 @@ export type DirectoryResult = {
 
 export const MAX_RESULTS = 30;
 
-/** Digits (or a typical postal-code shape) → ZIP search; anything else → city search. */
-export function looksLikeZip(q: string) {
-  return /\d/.test(q) && /^[a-z0-9 -]{2,10}$/i.test(q.trim());
-}
-
 function toResult(p: Profile): DirectoryResult {
   return {
     username: p.username,
-    name: p.name || p.username,
+    name: fullName(p) || p.username,
     title: p.title,
     avatarUrl: p.avatarUrl,
     location: displayLocation(p),
@@ -35,26 +31,29 @@ function toResult(p: Profile): DirectoryResult {
   };
 }
 
-/** Prefix match on city or ZIP, e.g. "atl" → Atlanta, "303" → 30303. */
+/**
+ * Matches every word of the query against name, headline, skills, city,
+ * state, ZIP or country — e.g. "alex atlanta", "react 30303", "riv".
+ */
 export async function searchProfiles(raw: string): Promise<DirectoryResult[]> {
-  const q = raw.trim();
-  if (!isFirebaseConfigured || q.length < 2) return [];
+  const words = Array.from(new Set(tokenize(raw.replace(/(\d)\s+(?=\d)/g, "$1")))).slice(0, 6);
+  if (!isFirebaseConfigured || words.length === 0) return [];
 
-  const field = looksLikeZip(q) ? "zipKey" : "cityKey";
-  const value = field === "zipKey" ? zipKey(q) : cityKey(q);
-
+  // Query on the most selective (longest) word, filter the rest in memory
+  const [first, ...rest] = [...words].sort((a, b) => b.length - a.length);
   const db = getFirestore(firebaseApp());
   try {
     const snap = await getDocs(
-      query(
-        collection(db, "publicProfiles"),
-        where(field, ">=", value),
-        where(field, "<=", `${value}`),
-        orderBy(field),
-        limit(MAX_RESULTS),
-      ),
+      query(collection(db, "publicProfiles"), where("searchTokens", "array-contains", first), limit(50)),
     );
-    return snap.docs.map((d) => toResult(normalizeProfile(d.data() as Partial<Profile>)));
+    return snap.docs
+      .map((d) => d.data())
+      .filter((data) => {
+        const tokens: unknown = data.searchTokens;
+        return Array.isArray(tokens) && rest.every((w) => tokens.includes(w));
+      })
+      .slice(0, MAX_RESULTS)
+      .map((data) => toResult(normalizeProfile(data)));
   } catch {
     return [];
   }
