@@ -16,4 +16,4 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:625276062728:web:d5db2c767d639ffd8455bd"
   - variable: NEXT_PUBLIC_SITE_URL
-    value: https://example.com
+    value: https://portfolio--portfolio-2ad84.us-east4.hosted.app
