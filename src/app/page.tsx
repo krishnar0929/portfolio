@@ -76,6 +76,9 @@ export default function Home() {
             <Link href="/demo" className="btn-ghost px-7 py-3 text-base">
               See an example <ArrowUpRightIcon className="h-4 w-4" />
             </Link>
+            <Link href="/demo?layout=cinema" className="btn-ghost px-7 py-3 text-base">
+              Try the Cinema layout <ArrowUpRightIcon className="h-4 w-4" />
+            </Link>
           </div>
           <p className="mt-6 font-mono text-sm text-slate-500">
             {host}/<span className="text-accent">yourname</span>
