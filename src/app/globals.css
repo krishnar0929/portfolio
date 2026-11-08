@@ -126,3 +126,59 @@ body {
     display: block;
   }
 }
+
+/* ---------- "Cinema" layout (components/portfolio/cinema) ---------- */
+@keyframes cinema-intro-name {
+  0% { opacity: 0; transform: scale(1.6); filter: blur(18px); letter-spacing: 0.3em; }
+  35% { opacity: 1; transform: scale(1); filter: blur(0); letter-spacing: -0.02em; }
+  75% { opacity: 1; transform: scale(1.04); filter: blur(0); }
+  100% { opacity: 0; transform: scale(2.4); filter: blur(10px); }
+}
+@keyframes cinema-intro-glow {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  40%, 70% { opacity: 1; transform: scale(1); }
+}
+@keyframes cinema-intro-bar {
+  0% { width: 0; opacity: 0; }
+  35% { width: 0; opacity: 1; }
+  70% { width: 40vmin; opacity: 1; }
+  100% { width: 40vmin; opacity: 0; }
+}
+@keyframes cinema-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes cinema-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cinema-pop {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cinema-kenburns {
+  from { transform: scale(1.12); }
+  to { transform: scale(1); }
+}
+.cinema-intro-name { animation: cinema-intro-name 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.cinema-intro-glow { animation: cinema-intro-glow 2.6s ease both; }
+.cinema-intro-bar { animation: cinema-intro-bar 2.6s ease both; }
+.cinema-fade { animation: cinema-fade 0.6s ease both; }
+.cinema-rise { animation: cinema-rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.cinema-pop { animation: cinema-pop 0.3s ease both; }
+.cinema-kenburns { animation: cinema-kenburns 12s ease-out both; }
+.cinema-numeral {
+  color: #0b0b0b;
+  -webkit-text-stroke: 3px rgb(255 255 255 / 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinema-intro-name,
+  .cinema-intro-glow,
+  .cinema-intro-bar,
+  .cinema-fade,
+  .cinema-rise,
+  .cinema-pop,
+  .cinema-kenburns {
+    animation: none;
+  }
+}

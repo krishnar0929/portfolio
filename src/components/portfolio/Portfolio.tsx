@@ -4,30 +4,24 @@ import {
   BriefcaseIcon,
   CalendarIcon,
   CapIcon,
-  ChatIcon,
   ClockIcon,
   CodeIcon,
   DownloadIcon,
-  GithubIcon,
-  GlobeIcon,
-  LinkedinIcon,
   MailIcon,
   PhoneIcon,
   PinIcon,
   QuoteIcon,
   StarIcon,
-  TelegramIcon,
   UserIcon,
-  XIcon,
 } from "@/components/Icons";
 import { hexToRgbTriplet } from "@/lib/color";
+import { CinemaPortfolio } from "./cinema/CinemaPortfolio";
+import { contactRows, initialsOf, type Icon } from "./helpers";
 import { displayLocation, formatMonth, fullName, type Profile } from "@/lib/types";
 import { Navbar, type NavLink } from "./Navbar";
 import { ProjectGrid } from "./ProjectGrid";
 import { Reveal } from "./Reveal";
 import { ThemeShell } from "./ThemeShell";
-
-type Icon = (props: { className?: string }) => JSX.Element;
 
 // Full class strings so Tailwind keeps them
 const PALETTE = [
@@ -41,67 +35,17 @@ const PALETTE = [
   { dot: "bg-indigo-500", chip: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" },
 ];
 
-const initialsOf = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
-
-/** "https://github.com/alex" -> "@alex"; leaves handles and plain text alone. */
-function handleFromUrl(value: string) {
-  const v = value.trim();
-  if (!/^https?:\/\//i.test(v)) return v;
-  try {
-    const parts = new URL(v).pathname.split("/").filter(Boolean);
-    const last = parts[parts.length - 1];
-    return last ? `@${last}` : new URL(v).hostname.replace(/^www\./, "");
-  } catch {
-    return v;
-  }
-}
-
-type ContactRow = { label: string; value: string; href?: string; Icon: Icon };
-
-function contactRows(p: Profile): ContactRow[] {
-  const s = p.socials;
-  const rows: (ContactRow | null)[] = [
-    s.telegram
-      ? {
-          label: "Telegram",
-          value: handleFromUrl(s.telegram).startsWith("@") ? handleFromUrl(s.telegram) : `@${s.telegram}`,
-          href: /^https?:/i.test(s.telegram) ? s.telegram : `https://t.me/${s.telegram.replace(/^@/, "")}`,
-          Icon: TelegramIcon,
-        }
-      : null,
-    s.discord
-      ? {
-          label: "Discord",
-          value: handleFromUrl(s.discord),
-          href: /^https?:/i.test(s.discord) ? s.discord : undefined,
-          Icon: ChatIcon,
-        }
-      : null,
-    s.github ? { label: "GitHub", value: handleFromUrl(s.github), href: s.github, Icon: GithubIcon } : null,
-    s.linkedin ? { label: "LinkedIn", value: handleFromUrl(s.linkedin), href: s.linkedin, Icon: LinkedinIcon } : null,
-    s.twitter ? { label: "X / Twitter", value: handleFromUrl(s.twitter), href: s.twitter, Icon: XIcon } : null,
-    s.website ? { label: "Website", value: handleFromUrl(s.website), href: s.website, Icon: GlobeIcon } : null,
-    ...p.otherLinks
-      .filter((l) => l.url.trim())
-      .map((l) => ({ label: l.label || "Link", value: handleFromUrl(l.url), href: l.url, Icon: GlobeIcon })),
-    p.phone ? { label: "Phone", value: p.phone, href: `tel:${p.phone.replace(/[^\d+]/g, "")}`, Icon: PhoneIcon } : null,
-    p.email ? { label: "Email", value: p.email, href: `mailto:${p.email}`, Icon: MailIcon } : null,
-  ];
-  return rows.filter(Boolean) as ContactRow[];
-}
-
 /**
  * The public one-page portfolio. Rendered on the server for /[username] and
  * on the client for the live preview in the dashboard.
  */
 /** `showExport={false}` when shown inside the dashboard (it has its own Export). */
-export function Portfolio({ profile: p, showExport = true }: { profile: Profile; showExport?: boolean }) {
+export function Portfolio({ profile, showExport = true }: { profile: Profile; showExport?: boolean }) {
+  if (profile.layout === "cinema") return <CinemaPortfolio profile={profile} showExport={showExport} />;
+  return <ClassicPortfolio profile={profile} showExport={showExport} />;
+}
+
+function ClassicPortfolio({ profile: p, showExport }: { profile: Profile; showExport: boolean }) {
   const displayName = fullName(p) || "Your Name";
   const hasSkills = p.skills.some((g) => g.items.length > 0);
 

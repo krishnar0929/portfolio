@@ -95,6 +95,14 @@ export type Theme = "light" | "dark";
 
 export type BackgroundStyle = "aurora" | "grid" | "dots" | "plain";
 
+/** Page layout: the standard one-pager, or the Netflix-style "Cinema" experience. */
+export type Layout = "classic" | "cinema";
+
+export const LAYOUTS: { value: Layout; label: string; hint: string }[] = [
+  { value: "classic", label: "Classic", hint: "Clean one-page portfolio with a profile card" },
+  { value: "cinema", label: "Cinema", hint: "Streaming-style: \"Who's watching?\", hero banner, rows of cards" },
+];
+
 export const BACKGROUND_STYLES: { value: BackgroundStyle; label: string }[] = [
   { value: "aurora", label: "Aurora" },
   { value: "grid", label: "Grid" },
@@ -177,6 +185,7 @@ export type Profile = {
   accent: string; // hex, e.g. #0ea5e9
   theme: Theme;
   backgroundStyle: BackgroundStyle;
+  layout: Layout;
   // What visitors see / who can see it
   privacy: Privacy;
   authorizedEmails: string[]; // owner-only; never copied to what visitors read
@@ -184,7 +193,7 @@ export type Profile = {
 
 export const DEFAULT_ACCENT = "#0ea5e9";
 
-export const ACCENT_PRESETS = ["#0ea5e9", "#6366f1", "#8b5cf6", "#10b981", "#14b8a6", "#f59e0b", "#f43f5e"];
+export const ACCENT_PRESETS = ["#0ea5e9", "#6366f1", "#8b5cf6", "#10b981", "#14b8a6", "#f59e0b", "#f43f5e", "#e50914"];
 
 export const emptyImmigration = (): Immigration => ({
   workAuthorization: "",
@@ -236,6 +245,7 @@ export function emptyProfile(username = ""): Profile {
     accent: DEFAULT_ACCENT,
     theme: "light",
     backgroundStyle: "aurora",
+    layout: "classic",
     privacy: { showEmail: true, showPhone: true, showImmigration: false, showReferences: false },
     authorizedEmails: [],
   };
@@ -430,6 +440,7 @@ export function normalizeProfile(data: unknown): Profile {
     backgroundStyle: BACKGROUND_STYLES.some((b) => b.value === d.backgroundStyle)
       ? (d.backgroundStyle as BackgroundStyle)
       : "aurora",
+    layout: d.layout === "cinema" ? "cinema" : "classic",
     privacy: {
       showEmail: bool(priv.showEmail, true),
       showPhone: bool(priv.showPhone, true),

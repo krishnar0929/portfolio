@@ -218,6 +218,7 @@ export default function DashboardPage() {
       accent: profile.accent,
       theme: profile.theme,
       backgroundStyle: profile.backgroundStyle,
+      layout: profile.layout,
       backgroundUrl: profile.backgroundUrl,
       firstName: profile.firstName || sampleProfile.firstName,
       middleName: profile.middleName,

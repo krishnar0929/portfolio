@@ -7,10 +7,12 @@ import {
   ACCENT_PRESETS,
   BACKGROUND_STYLES,
   isValidEmail,
+  LAYOUTS,
   normalizeEmail,
   publishedView,
   THEME_PRESETS,
   type BackgroundStyle,
+  type Layout,
   type Profile,
   type Visibility,
 } from "@/lib/types";
@@ -28,6 +30,39 @@ function Card({ title, description, children }: { title: string; description?: s
       {description && <p className="mt-1 text-sm text-slate-400">{description}</p>}
       <div className="mt-5">{children}</div>
     </section>
+  );
+}
+
+/** Tiny wireframe of each page layout. */
+function LayoutSwatch({ layout, accent }: { layout: Layout; accent: string }) {
+  if (layout === "cinema") {
+    return (
+      <span className="relative block h-20 overflow-hidden bg-[#0b0b0b]">
+        <span className="absolute inset-y-0 right-0 w-1/2" style={{ background: `radial-gradient(circle at 70% 40%, ${accent}aa, transparent 70%)` }} />
+        <span className="absolute left-3 top-3 h-2.5 w-16 rounded-sm" style={{ background: accent }} />
+        <span className="absolute left-3 top-7 h-1.5 w-24 rounded-sm bg-white/40" />
+        <span className="absolute left-3 top-10 h-2.5 w-8 rounded-sm bg-white" />
+        <span className="absolute bottom-2 left-3 right-0 flex gap-1.5">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <span key={i} className="h-5 w-10 shrink-0 rounded-sm" style={{ background: i === 0 ? accent : "#2a2a2a" }} />
+          ))}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="relative flex h-20 gap-2 overflow-hidden bg-slate-100 p-3">
+      <span className="flex w-1/3 flex-col items-center rounded-md bg-white pt-2 shadow-sm">
+        <span className="h-5 w-5 rounded-full" style={{ background: accent }} />
+        <span className="mt-1.5 h-1 w-8 rounded bg-slate-300" />
+      </span>
+      <span className="flex flex-1 flex-col gap-1.5 pt-1">
+        <span className="h-2 w-12 rounded" style={{ background: accent }} />
+        <span className="h-1.5 w-full rounded bg-slate-300" />
+        <span className="h-1.5 w-4/5 rounded bg-slate-300" />
+        <span className="h-1.5 w-3/5 rounded bg-slate-300" />
+      </span>
+    </span>
   );
 }
 
@@ -240,6 +275,39 @@ export function SettingsPanel({
 
       {/* Appearance */}
       <Card title="Appearance" description="How your page looks to visitors. Press Save to apply.">
+        <p className="label">Layout</p>
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          {LAYOUTS.map((l) => {
+            const active = profile.layout === l.value;
+            return (
+              <button
+                key={l.value}
+                type="button"
+                onClick={() => onChange({ layout: l.value })}
+                className={`overflow-hidden rounded-xl border text-left transition ${
+                  active ? "border-accent ring-2 ring-accent/30" : "border-white/[0.08] hover:border-white/25"
+                }`}
+              >
+                <LayoutSwatch layout={l.value} accent={profile.accent} />
+                <span className="block px-3 py-2">
+                  <span className="flex items-center justify-between text-sm text-slate-200">
+                    {l.label}
+                    {l.value === "cinema" && (
+                      <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">New</span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-slate-500">{l.hint}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {profile.layout === "cinema" && (
+          <p className="-mt-3 mb-6 text-xs text-slate-500">
+            Cinema is always dark and uses your accent colour (try the red swatch below for the classic streaming look). Add a
+            background image or profile photo for the hero banner. Theme presets and backgrounds below apply to Classic.
+          </p>
+        )}
         <p className="label">Theme presets</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {THEME_PRESETS.map((t) => {
